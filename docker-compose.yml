@@ -73,7 +73,7 @@ services:
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
     env_file:
-      - .env
+      - .env-docker
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
     deploy:
@@ -89,7 +89,7 @@ services:
     depends_on:
       - db
     env_file:
-      - .env
+      - .env-docker
     deploy:
       labels:
         - traefik.enable=true
@@ -112,12 +112,12 @@ services:
     # You also have to change the flower command
   
   flower:
-    image: mher/flower
+    image: mher/flower:0.9.7
     networks:
       - ${TRAEFIK_PUBLIC_NETWORK?Variable not set}
       - default
     env_file:
-      - .env
+      - .env-docker
     command:
       - "--broker=amqp://guest@queue:5672//"
       # For the "Broker" tab to work in the flower UI, uncomment the following command argument,
@@ -142,7 +142,7 @@ services:
     depends_on:
       - db
     env_file:
-      - .env
+      - .env-docker
     environment:
       - SERVER_NAME=${DOMAIN?Variable not set}
       - SERVER_HOST=https://${DOMAIN?Variable not set}
@@ -166,7 +166,7 @@ services:
       - db
       - queue
     env_file:
-      - .env
+      - .env-docker
     environment:
       - SERVER_NAME=${DOMAIN?Variable not set}
       - SERVER_HOST=https://${DOMAIN?Variable not set}

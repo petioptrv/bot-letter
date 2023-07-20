@@ -81,6 +81,7 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
     USERS_OPEN_REGISTRATION: bool = False
+    QUEUE_URL: str = "queue"
 
     class Config:
         case_sensitive = True

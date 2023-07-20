@@ -36,6 +36,15 @@ services:
     ports:
       - "5555:5555"
 
+  db:
+    ports:
+      - "8001:5432"
+
+  queue:
+    ports:
+      - "8002:5672"  # RabbitMQ
+      - "8003:15672"  # management interface
+
   backend:
     ports:
       - "8888:8888"
