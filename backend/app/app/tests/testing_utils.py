@@ -1,6 +1,7 @@
 import re
 from typing import Optional, Dict, Any, Pattern
 
+from aioresponses import aioresponses
 from aioresponses.compat import normalize_url, merge_params
 
 
@@ -28,3 +29,7 @@ def compile_url_matcher(
         )
     regex_url = re.compile(regex_str)
     return regex_url
+
+
+class APIProviderMocker(aioresponses):
+    pass
