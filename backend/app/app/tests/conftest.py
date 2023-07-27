@@ -36,7 +36,7 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
 
 
 @pytest.fixture(scope="module")
-def api_provider_mock() -> Generator:
+def api_provider_mock() -> APIProviderMocker:
     mock = APIProviderMocker()
     with mock:
         yield mock

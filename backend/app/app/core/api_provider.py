@@ -15,3 +15,15 @@ class APIProvider:
                         f"Request returned an error: {response.status}, {await response.text()}"
                     )
                 return await response.json()
+
+    @staticmethod
+    async def post(
+        url: str, data: Optional[str] = None, headers: Optional[Dict] = None
+    ) -> Dict:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url=url, data=data, headers=headers) as response:
+                if response.status != 200:
+                    raise IOError(
+                        f"Request returned an error: {response.status}, {await response.text()}"
+                    )
+                return await response.json()
