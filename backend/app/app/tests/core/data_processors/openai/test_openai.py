@@ -1,4 +1,7 @@
+import numpy as np
 import pytest
+from numpy import testing
+
 from app.core.api_provider import APIProvider
 from app.core.data_processors.openai.openai import OpenAI
 from app.core.data_processors.openai.openai_utils import (
@@ -8,6 +11,7 @@ from app.core.data_processors.openai.openai_utils import (
     OpenAIChatCompletion,
 )
 from app.tests.testing_utils import compile_url_matcher, APIProviderMocker
+from app.base_types import Embedding
 
 
 @pytest.mark.asyncio
@@ -98,44 +102,46 @@ async def test_get_embedding(api_provider_mock: APIProviderMocker):
     config = OpenAIConfig(openai_api_key="test-api-key")
     client = OpenAI(api_provider=api_provider, config=config)
     response = await client.get_embedding(model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text="OpenAI")
+    expected_array = np.array(mock_response["data"][0]["embedding"], dtype=np.float32).tobytes()
 
-    assert response == mock_response
+    assert isinstance(response, Embedding)
+    assert response.vector == expected_array
+    assert response.model == "text-embedding-ada-002"
 
 
-# if __name__ == "__main__":
-#     import asyncio
-#     from pprint import pprint
-#
-#     api_provider_ = APIProvider()
-#     openai = OpenAI(api_provider=api_provider_, config=OpenAIConfig())
-#
-#     models = asyncio.run(openai.get_models())
-#     print(models)
-#
-#     text = (
-#         "Received as a part of the SPARK grants by iDEX, Pixxel said the grant will"
-#         " help it develop small satellites of up to 150 kgs for electro-optical,"
-#         " infrared, synthetic aperture radar and hyper spectral purposes."
-#     )
-#
-#     embedding = asyncio.run(openai.get_embedding(model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text=text))
-#     print(embedding)
-#
-#     messages = [
-#         OpenAIChatCompletion(
-#             role=OpenAIRoles.SYSTEM,
-#             content=(
-#                 """You are a newsletter creator. I will give you the summaries of
-# a certain number of articles (I will tell you how many) along with
-# their links that I will send to you in this chat, you won't have to
-# browse the web for them yourself. You have to read the articles and
-# select 5 that seem most important and impactful, then you have to
-# give a summary for each article. Each summary should be a maximum of
-# 300 words. You should also provide the link to the article in the
-# form {'summary': YOUR_SUMMARY, 'link': ARTICLE_LINK}. Do you have
-# any clarification questions?"""
-#             ),
-#         )
-#     ]
-#     completions = asyncio.run(openai.get_chat_completions(model=OpenAIModels.GPT_3_5_TURBO, messages=messages))
-#     print(completions)
+if __name__ == "__main__":
+    import asyncio
+
+    api_provider_ = APIProvider()
+    openai = OpenAI(api_provider=api_provider_, config=OpenAIConfig())
+
+    models = asyncio.run(openai.get_models())
+    print(models)
+
+    text = (
+        "Received as a part of the SPARK grants by iDEX, Pixxel said the grant will"
+        " help it develop small satellites of up to 150 kgs for electro-optical,"
+        " infrared, synthetic aperture radar and hyper spectral purposes."
+    )
+
+    embedding = asyncio.run(openai.get_embedding(model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text=text))
+    print(embedding)
+
+    messages = [
+        OpenAIChatCompletion(
+            role=OpenAIRoles.SYSTEM,
+            content=(
+                """You are a newsletter creator. I will give you the summaries of
+a certain number of articles (I will tell you how many) along with
+their links that I will send to you in this chat, you won't have to
+browse the web for them yourself. You have to read the articles and
+select 5 that seem most important and impactful, then you have to
+give a summary for each article. Each summary should be a maximum of
+300 words. You should also provide the link to the article in the
+form {'summary': YOUR_SUMMARY, 'link': ARTICLE_LINK}. Do you have
+any clarification questions?"""
+            ),
+        )
+    ]
+    completions = asyncio.run(openai.get_chat_completions(model=OpenAIModels.GPT_3_5_TURBO, messages=messages))
+    print(completions)

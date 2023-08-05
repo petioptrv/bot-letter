@@ -1,12 +1,12 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from app.base_types import Model
 
 
-class Token(BaseModel):
+class Token(Model):
     access_token: str
     token_type: str
 
 
-class TokenPayload(BaseModel):
+class TokenPayload(Model):
     sub: Optional[int] = None

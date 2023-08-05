@@ -1,10 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from app.base_types import EmailStr, Model
 
 
 # Shared properties
-class UserBase(BaseModel):
+class UserBase(Model):
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     is_superuser: bool = False

@@ -1,18 +1,19 @@
 from enum import Enum
 
-from pydantic import BaseSettings, BaseModel
+from app.base_types import Model, Config
 
 
-class OpenAIConfig(BaseSettings):
+class OpenAIConfig(Config):
     openai_api_key: str
 
 
 class OpenAIRoles(str, Enum):
     SYSTEM = "system"
     USER = "user"
+    ASSISTANT = "assistant"
 
 
-class OpenAIChatCompletion(BaseModel):
+class OpenAIChatCompletion(Model):
     role: OpenAIRoles
     content: str
 

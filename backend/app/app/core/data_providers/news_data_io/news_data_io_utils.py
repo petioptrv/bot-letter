@@ -1,9 +1,9 @@
 from enum import Enum
 
-from pydantic import BaseSettings
+from app.base_types import Config
 
 
-class NewsDataIOConfig(BaseSettings):
+class NewsDataIOConfig(Config):
     news_data_io_api_key: str
 
 

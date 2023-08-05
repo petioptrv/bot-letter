@@ -55,16 +55,16 @@ async def test_get_last_day_news_error(api_provider_mock: APIProviderMocker):
         await client.get_last_day_news(topic="OpenAI")
 
 
-# if __name__ == "__main__":
-#     import asyncio
-#     from pprint import pprint
-#
-#     from dotenv import load_dotenv
-#
-#     load_dotenv()
-#
-#     news_data_io = NewsDataIO(api_provider=APIProvider(), config=NewsDataIOConfig())
-#
-#     resp = asyncio.run(news_data_io.get_last_day_news(topic='"space exploration"'))
-#     pprint(resp)
-#     print(f"len results: {len(resp['results'])}")
+if __name__ == "__main__":
+    import asyncio
+    from pprint import pprint
+
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
+    news_data_io = NewsDataIO(api_provider=APIProvider(), config=NewsDataIOConfig())
+
+    resp = asyncio.run(news_data_io.get_last_day_news(topic='"space exploration"'))
+    pprint(resp)
+    print(f"len results: {len(resp['results'])}")

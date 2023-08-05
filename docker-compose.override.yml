@@ -40,6 +40,10 @@ services:
     ports:
       - "8001:5432"
 
+  cache:
+    ports:
+      - "8004:6379"
+
   queue:
     ports:
       - "8002:5672"  # RabbitMQ

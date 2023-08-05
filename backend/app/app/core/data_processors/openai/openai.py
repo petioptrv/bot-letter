@@ -1,15 +1,19 @@
 import json
 from typing import Dict, List
 
+import numpy as np
+
 from app.core.api_provider import APIProvider
 from app.core.data_processors.openai.openai_utils import (
     OpenAIConfig,
     OpenAIModels,
-    OpenAIChatCompletion,
+    OpenAIChatCompletion, OpenAIRoles,
 )
+from app.base_types import Embedding
 
 
 class OpenAI:
+    # todo: add interest tuning (i.e. description of what the user is interested in)
     def __init__(self, api_provider: APIProvider, config: OpenAIConfig):
         self._api_provider = api_provider
         self._api_key = config.openai_api_key
@@ -25,7 +29,7 @@ class OpenAI:
         self,
         model: OpenAIModels,
         messages: List[OpenAIChatCompletion],
-    ) -> Dict:
+    ) -> OpenAIChatCompletion:
         url = f"{self._base_url}/chat/completions"
         headers = self._build_auth_headers()
         headers["Content-Type"] = "application/json"
@@ -36,9 +40,13 @@ class OpenAI:
         response = await self._api_provider.post(
             url=url, headers=headers, data=json.dumps(data)
         )
-        return response
+        completion = OpenAIChatCompletion(
+            role=OpenAIRoles(response["choices"][0]["message"]["role"]),
+            content=response["choices"][0]["message"]["content"],
+        )
+        return completion
 
-    async def get_embedding(self, model: OpenAIModels, text: str) -> Dict:
+    async def get_embedding(self, model: OpenAIModels, text: str) -> Embedding:
         url = f"{self._base_url}/embeddings"
         headers = self._build_auth_headers()
         headers["Content-Type"] = "application/json"
@@ -49,7 +57,9 @@ class OpenAI:
         response = await self._api_provider.post(
             url=url, headers=headers, data=json.dumps(data)
         )
-        return response
+        vector = np.array(response["data"][0]["embedding"], dtype=np.float32)
+        embedding = Embedding(vector=vector, model=model)
+        return embedding
 
     def _build_auth_headers(self) -> Dict:
         headers = {

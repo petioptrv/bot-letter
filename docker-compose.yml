@@ -81,6 +81,13 @@ services:
         constraints:
           - node.labels.${STACK_NAME?Variable not set}.app-db-data == true
 
+  cache:
+    image: redis/redis-stack:6.2.6-v9
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD?Variable not set} --loadmodule /opt/redis-stack/lib/redisearch.so
+    volumes:
+      - redis-data:/data
+
   pgadmin:
     image: dpage/pgadmin4
     networks:
@@ -193,6 +200,7 @@ services:
 
 volumes:
   app-db-data:
+  redis-data:
 
 networks:
   traefik-public:

@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 import emails
@@ -16,6 +15,7 @@ def send_email(
     html_template: str = "",
     environment: Dict[str, Any] = {},
 ) -> None:
+    # todo: make email auth more secure
     assert settings.EMAILS_ENABLED, "no provided configuration for email variables"
     message = emails.Message(
         subject=JinjaTemplate(subject_template),
@@ -33,10 +33,21 @@ def send_email(
     logging.info(f"send email result: {response}")
 
 
+def send_newsletter_email(email_to: str, subject: str, content: str, search_term: str) -> None:
+    with open(settings.EMAIL_TEMPLATES_DIR / "newsletter.html") as f:
+        template_str = f.read()
+    send_email(
+        email_to=email_to,
+        subject_template=subject,
+        html_template=template_str,
+        environment={"content": content, "search_term": search_term},
+    )
+
+
 def send_test_email(email_to: str) -> None:
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Test email"
-    with open(Path(settings.EMAIL_TEMPLATES_DIR) / "test_email.html") as f:
+    with open(settings.EMAIL_TEMPLATES_DIR / "test_email.html") as f:
         template_str = f.read()
     send_email(
         email_to=email_to,
@@ -49,7 +60,7 @@ def send_test_email(email_to: str) -> None:
 def send_reset_password_email(email_to: str, email: str, token: str) -> None:
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Password recovery for user {email}"
-    with open(Path(settings.EMAIL_TEMPLATES_DIR) / "reset_password.html") as f:
+    with open(settings.EMAIL_TEMPLATES_DIR / "reset_password.html") as f:
         template_str = f.read()
     server_host = settings.SERVER_HOST
     link = f"{server_host}/reset-password?token={token}"
@@ -70,7 +81,7 @@ def send_reset_password_email(email_to: str, email: str, token: str) -> None:
 def send_new_account_email(email_to: str, username: str, password: str) -> None:
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - New account for user {username}"
-    with open(Path(settings.EMAIL_TEMPLATES_DIR) / "new_account.html") as f:
+    with open(settings.EMAIL_TEMPLATES_DIR / "new_account.html") as f:
         template_str = f.read()
     link = settings.SERVER_HOST
     send_email(

@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from app.core.api_provider import APIProvider
 from app.core.data_providers.news_data_io.news_data_io_utils import NewsDataIOCategories, NewsDataIOConfig
-from app.core.news_article import NewsArticle
+from app.base_types import NewsArticle
 
 
 class NewsDataIO:
@@ -19,6 +19,7 @@ class NewsDataIO:
         categories: Optional[List[NewsDataIOCategories]] = None,
         max_page_count: int = sys.maxsize,
     ) -> List[NewsArticle]:
+        # todo: consider filtering articles published by several news outlets (i.e. exact same article, but diff urls)
         articles_data = await self._get_news_data(
             topic=topic, categories=categories, max_page_count=max_page_count
         )
@@ -30,7 +31,9 @@ class NewsDataIO:
                 search_term=topic,
                 publishing_timestamp=self._to_utc_timestamp(pub_date_string=article["pubDate"]),
                 content=article["content"],
-            ) for article in articles_data["results"]
+            )
+            for article in articles_data["results"]
+            if article["content"] is not None
         ]
 
         return articles
@@ -42,7 +45,7 @@ class NewsDataIO:
         max_page_count: int,
     ) -> Dict:
         params = {
-            "q": topic,
+            "q": f"\"{topic}\"",
         }
         if categories is not None and len(categories) != 0:
             params["category"] = ",".join(categories)
@@ -67,4 +70,5 @@ class NewsDataIO:
 
     @staticmethod
     def _to_utc_timestamp(pub_date_string: str) -> int:
-        return int(datetime.strptime(pub_date_string, "%Y-%m-%d %H: %M: %S").timestamp())
+        timestamp = int(datetime.strptime(pub_date_string, "%Y-%m-%d %H:%M:%S").timestamp())
+        return timestamp

@@ -1,5 +1,5 @@
-from pydantic import BaseModel
+from app.base_types import Model
 
 
-class Msg(BaseModel):
+class Msg(Model):
     msg: str

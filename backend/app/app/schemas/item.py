@@ -1,10 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from app.base_types import Model
 
 
 # Shared properties
-class ItemBase(BaseModel):
+class ItemBase(Model):
     title: Optional[str] = None
     description: Optional[str] = None
 

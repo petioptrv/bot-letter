@@ -1,10 +1,11 @@
 import secrets
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, EmailStr, HttpUrl, PostgresDsn, validator
+from app.base_types import AnyHttpUrl, EmailStr, HttpUrl, PostgresDsn, validator, Config
 
 
-class Settings(BaseSettings):
+class Settings(Config):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
@@ -66,7 +67,7 @@ class Settings(BaseSettings):
         return v
 
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
-    EMAIL_TEMPLATES_DIR: str = "/app/app/email-templates/build"
+    EMAIL_TEMPLATES_DIR: Path = Path(__file__).parent / ".." / "email-templates" / "build"
     EMAILS_ENABLED: bool = False
 
     @validator("EMAILS_ENABLED", pre=True)
