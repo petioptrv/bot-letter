@@ -45,7 +45,7 @@ class NewsDataIO:
         max_page_count: int,
     ) -> Dict:
         params = {
-            "q": f"\"{topic}\"",
+            "q": topic,
         }
         if categories is not None and len(categories) != 0:
             params["category"] = ",".join(categories)

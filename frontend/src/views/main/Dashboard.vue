@@ -13,6 +13,9 @@
         <v-btn to="/main/profile/password">Change Password</v-btn>
       </v-card-actions>
     </v-card>
+    <v-card v-if="userProfile?.subscriptions?.length > 0" class="ma-3 pa-3">
+      <v-card-text>test text</v-card-text>
+    </v-card>
   </v-container>
 </template>
 
@@ -23,8 +26,14 @@ import { readUserProfile } from '@/store/main/getters';
 
 @Component
 export default class Dashboard extends Vue {
+  get userProfile() {
+    return readUserProfile(this.$store);
+  }
+
   get greetedUser() {
     const userProfile = readUserProfile(this.$store);
+    console.log(userProfile);
+    console.log(userProfile?.subscriptions);
     if (userProfile) {
       if (userProfile.full_name) {
         return userProfile.full_name;

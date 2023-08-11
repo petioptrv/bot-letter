@@ -1,14 +1,16 @@
-from typing import Optional
+from typing import Optional, List
 
 from app.base_types import EmailStr, Model
+from app.schemas.subscription import SubscriptionBase, SubscriptionBaseInDBBase
 
 
 # Shared properties
 class UserBase(Model):
+    full_name: Optional[str] = None
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     is_superuser: bool = False
-    full_name: Optional[str] = None
+    subscriptions: List[SubscriptionBase] = []
 
 
 # Properties to receive via API on creation
@@ -24,6 +26,7 @@ class UserUpdate(UserBase):
 
 class UserInDBBase(UserBase):
     id: Optional[int] = None
+    subscriptions: List[SubscriptionBaseInDBBase] = []
 
     class Config:
         orm_mode = True

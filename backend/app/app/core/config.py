@@ -2,6 +2,7 @@ import secrets
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from app import root_path
 from app.base_types import AnyHttpUrl, EmailStr, HttpUrl, PostgresDsn, validator, Config
 
 
@@ -67,7 +68,7 @@ class Settings(Config):
         return v
 
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
-    EMAIL_TEMPLATES_DIR: Path = Path(__file__).parent / ".." / "email-templates" / "build"
+    EMAIL_TEMPLATES_DIR: Path = root_path() / "app" / "email-templates" / "build"
     EMAILS_ENABLED: bool = False
 
     @validator("EMAILS_ENABLED", pre=True)

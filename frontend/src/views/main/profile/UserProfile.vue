@@ -36,11 +36,15 @@ export default class UserProfile extends Vue {
   }
 
   public goToEdit() {
-    this.$router.push('/main/profile/edit');
+    if (this.$route.path != '/main/profile/edit') {
+      this.$router.push('/main/profile/edit');
+    }
   }
 
   public goToPassword() {
-    this.$router.push('/main/profile/password');
+    if (this.$route.path != '/main/profile/password') {
+      this.$router.push('/main/profile/password');
+    }
   }
 }
 </script>

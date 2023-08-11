@@ -975,6 +975,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "pyyaml"
+version = "6.0.1"
+description = "YAML parser and emitter for Python"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "raven"
 version = "6.10.0"
 description = "Raven is a client for Sentry (https://getsentry.com)"
@@ -1237,7 +1245,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-ena
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "468b0978eb141e079b284d1aba0cab8f55f22b97970037bd35772d55fd39d58b"
+content-hash = "0d5ea28ed51e70dd5290b413bca9a972d181d0960e1b17239a99fa4ace963280"
 
 [metadata.files]
 aiohttp = []
@@ -1330,6 +1338,7 @@ python-jose = [
 ]
 python-multipart = []
 pytz = []
+pyyaml = []
 raven = [
     {file = "raven-6.10.0-py2.py3-none-any.whl", hash = "sha256:44a13f87670836e153951af9a3c80405d36b43097db869a36e92809673692ce4"},
     {file = "raven-6.10.0.tar.gz", hash = "sha256:3fa6de6efa2493a7c827472e984ce9b020797d0da16f1db67197bcc23c8fae54"},

@@ -10,10 +10,12 @@ import router from './router';
 import store from '@/store';
 import './registerServiceWorker';
 import 'vuetify/dist/vuetify.min.css';
+import Vuetify from "vuetify";
 
 Vue.config.productionTip = false;
 
 new Vue({
+  vuetify: new Vuetify(),
   router,
   store,
   render: (h) => h(App),

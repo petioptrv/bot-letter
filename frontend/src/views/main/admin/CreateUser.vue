@@ -90,7 +90,9 @@ export default class CreateUser extends Vue {
       updatedProfile.is_superuser = this.isSuperuser;
       updatedProfile.password = this.password1;
       await dispatchCreateUser(this.$store, updatedProfile);
-      this.$router.push('/main/admin/users');
+      if (this.$route.path != 'main/admin/users') {
+        this.$router.push('/main/admin/users');
+      }
     }
   }
 }
