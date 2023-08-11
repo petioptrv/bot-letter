@@ -1,5 +1,5 @@
 # Stage 0, "build-stage", based on Node.js, to build and compile the frontend
-FROM node:16 as build-stage
+FROM node:18 as build-stage
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ ENV VUE_APP_ENV=${FRONTEND_ENV}
 # Comment out the next line to disable tests
 RUN npm run test:unit
 
-RUN npm run build
+RUN npm run build -- --verbose
 
 
 # Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
