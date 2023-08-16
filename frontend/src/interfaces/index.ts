@@ -3,6 +3,29 @@ export interface ISubscription {
     search_term: string;
 }
 
+export interface ISubscriptionSearch {
+    search_term: string;
+}
+
+export interface ISubscriptionSearchResult {
+    title: string;
+    url: string;
+    img_url: string;
+    search_term: string;
+    publishing_timestamp: number;
+    description: string;
+    content: string;
+}
+
+export interface ISubscriptionSearchResults {
+    results_count: number;
+    results: ISubscriptionSearchResult[];
+}
+
+export interface ISubscriptionCreate {
+    search_term: string;
+}
+
 export interface IUserProfile {
     email: string;
     is_active: boolean;

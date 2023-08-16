@@ -7,6 +7,9 @@ class NewsDataIOConfig(Config):
     news_data_io_api_key: str
 
 
+news_data_io_config = NewsDataIOConfig()
+
+
 class NewsDataIOCategories(str, Enum):
     business = "business"
     entertainment = "entertainment"

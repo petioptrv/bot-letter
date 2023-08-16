@@ -99,13 +99,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { IUserProfile, IUserProfileUpdate } from '@/interfaces';
+import { Component } from 'vue-property-decorator';
+import { IUserProfileUpdate } from '@/interfaces';
 import { dispatchGetUsers, dispatchUpdateUser } from '@/store/admin/actions';
 import { readAdminOneUser } from '@/store/admin/getters';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class EditUser extends Vue {
+export default class EditUser extends AdaptedVue {
   public valid = true;
   public fullName: string = '';
   public email: string = '';
@@ -153,7 +154,7 @@ export default class EditUser extends Vue {
       }
       await dispatchUpdateUser(this.$store, { id: this.user!.id, user: updatedProfile });
       if (this.$route.path != 'main/admin/users') {
-        this.$router.push('/main/admin/users');
+        this.$router.adaptedPush('/main/admin/users');
       }
     }
   }

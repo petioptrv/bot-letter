@@ -28,12 +28,13 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component } from 'vue-property-decorator';
 import { appName } from '@/env';
 import { dispatchPasswordRecovery } from '@/store/main/actions';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class Login extends Vue {
+export default class Login extends AdaptedVue {
   public valid = true;
   public username: string = '';
   public appName = appName;

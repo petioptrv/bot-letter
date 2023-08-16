@@ -6,10 +6,11 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop, Emit } from 'vue-property-decorator';
+import { Component, Prop, Emit } from 'vue-property-decorator';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class UploadButton extends Vue {
+export default class UploadButton extends AdaptedVue {
   @Prop(String) public color: string | undefined;
   @Prop({default: false}) public multiple!: boolean;
   @Emit()

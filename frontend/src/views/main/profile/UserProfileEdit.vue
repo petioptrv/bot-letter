@@ -44,14 +44,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Store } from 'vuex';
+import { Component } from 'vue-property-decorator';
 import { IUserProfileUpdate } from '@/interfaces';
 import { readUserProfile } from '@/store/main/getters';
 import { dispatchUpdateUserProfile } from '@/store/main/actions';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class UserProfileEdit extends Vue {
+export default class UserProfileEdit extends AdaptedVue {
   public valid = true;
   public fullName: string = '';
   public email: string = '';
@@ -91,7 +91,7 @@ export default class UserProfileEdit extends Vue {
       }
       await dispatchUpdateUserProfile(this.$store, updatedProfile);
       if (this.$route.path != '/main/profile') {
-        this.$router.push('/main/profile');
+        this.$router.adaptedPush('/main/profile');
       }
     }
   }

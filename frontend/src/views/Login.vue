@@ -32,14 +32,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { api } from '@/api';
+import { Component } from 'vue-property-decorator';
 import { appName } from '@/env';
 import { readLoginError } from '@/store/main/getters';
 import { dispatchLogIn } from '@/store/main/actions';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class Login extends Vue {
+export default class Login extends AdaptedVue {
   public email: string = '';
   public password: string = '';
   public appName = appName;

@@ -7,7 +7,20 @@ class SubscriptionBase(Model):
     search_term: Optional[str] = None
 
 
-class SubscriptionBaseInDBBase(SubscriptionBase):
+class SubscriptionCreate(SubscriptionBase):
+    search_term: str
+
+
+class SubscriptionUpdate(SubscriptionBase):
+    pass
+
+
+class SubscriptionDelete(SubscriptionBase):
+    id: int
+    search_term: str
+
+
+class SubscriptionInDB(SubscriptionBase):
     id: int
     search_term: str
     owner_id: int

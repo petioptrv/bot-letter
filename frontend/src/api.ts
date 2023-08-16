@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { apiUrl } from '@/env';
-import { IUserProfile, IUserProfileUpdate, IUserProfileCreate } from './interfaces';
+import {IUserProfile, IUserProfileUpdate, IUserProfileCreate, ISubscriptionSearch, ISubscription} from './interfaces';
 
 function authHeaders(token: string) {
   return {
@@ -21,8 +21,22 @@ export const api = {
   async getMe(token: string) {
     return axios.get<IUserProfile>(`${apiUrl}/api/v1/users/me`, authHeaders(token));
   },
+  async canCreateSubscription(token: string) {
+    return axios.get(`${apiUrl}/api/v1/subscriptions/can-create`, authHeaders(token));
+  },
   async updateMe(token: string, data: IUserProfileUpdate) {
     return axios.put<IUserProfile>(`${apiUrl}/api/v1/users/me`, data, authHeaders(token));
+  },
+  async getSubscriptionSearch(token: string, data: ISubscriptionSearch) {
+    let config = authHeaders(token);
+    config["params"] = data;
+    return axios.get(`${apiUrl}/api/v1/subscriptions/search`, config);
+  },
+  async postSubscriptionCreate(token: string, searchTerm: string) {
+    return axios.post(`${apiUrl}/api/v1/subscriptions/create`, {search_term: searchTerm}, authHeaders(token));
+  },
+  async deleteSubscription(token: string, subscription: ISubscription) {
+    return axios.delete(`${apiUrl}/api/v1/subscriptions/delete`, {data: subscription, ...authHeaders(token)});
   },
   async getUsers(token: string) {
     return axios.get<IUserProfile[]>(`${apiUrl}/api/v1/users/`, authHeaders(token));

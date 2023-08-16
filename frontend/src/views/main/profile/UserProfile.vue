@@ -25,25 +25,25 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Store } from 'vuex';
+import { Component } from 'vue-property-decorator';
 import { readUserProfile } from '@/store/main/getters';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class UserProfile extends Vue {
+export default class UserProfile extends AdaptedVue {
   get userProfile() {
     return readUserProfile(this.$store);
   }
 
   public goToEdit() {
     if (this.$route.path != '/main/profile/edit') {
-      this.$router.push('/main/profile/edit');
+      this.$router.adaptedPush('/main/profile/edit');
     }
   }
 
   public goToPassword() {
     if (this.$route.path != '/main/profile/password') {
-      this.$router.push('/main/profile/password');
+      this.$router.adaptedPush('/main/profile/password');
     }
   }
 }

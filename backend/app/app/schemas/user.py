@@ -1,7 +1,7 @@
 from typing import Optional, List
 
 from app.base_types import EmailStr, Model
-from app.schemas.subscription import SubscriptionBase, SubscriptionBaseInDBBase
+from app.schemas.subscription import SubscriptionBase, SubscriptionInDB
 
 
 # Shared properties
@@ -26,7 +26,7 @@ class UserUpdate(UserBase):
 
 class UserInDBBase(UserBase):
     id: Optional[int] = None
-    subscriptions: List[SubscriptionBaseInDBBase] = []
+    subscriptions: List[SubscriptionInDB] = []
 
     class Config:
         orm_mode = True

@@ -11,6 +11,7 @@ export interface MainState {
     isLoggedIn: boolean | null;
     logInError: boolean;
     userProfile: IUserProfile | null;
+    canCreateSubscriptions: boolean;
     dashboardMiniDrawer: boolean;
     dashboardShowDrawer: boolean;
     notifications: AppNotification[];

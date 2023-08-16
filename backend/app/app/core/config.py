@@ -84,6 +84,8 @@ class Settings(Config):
     FIRST_SUPERUSER_PASSWORD: str
     USERS_OPEN_REGISTRATION: bool = False
     QUEUE_URL: str = "queue"
+    MAX_SUBSCRIPTIONS: int = 1
+    MAX_SUBSCRIPTION_SEARCH_RESULTS: int = 10
 
     class Config:
         case_sensitive = True

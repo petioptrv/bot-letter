@@ -3,9 +3,18 @@ import Router from 'vue-router';
 
 import RouterComponent from './components/RouterComponent.vue';
 
-Vue.use(Router);
+export class AdaptedRouter extends Router {
+    public adaptedPush(location: string) {
+      // todo: fix this — maybe migrate to Vue 3?
+      return super.push(location).catch((error: any) => {
+        console.log(error);
+      });
+    }
+}
 
-export default new Router({
+Vue.use(AdaptedRouter);
+
+export default new AdaptedRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   routes: [
@@ -35,6 +44,10 @@ export default new Router({
             {
               path: 'dashboard',
               component: () => import(/* webpackChunkName: "main-dashboard" */ './views/main/Dashboard.vue'),
+            },
+            {
+              path: 'create-subscription',
+              component: () => import(/* webpackChunkName: "main-subscriptions" */ './views/main/CreateSubscription.vue'),
             },
             {
               path: 'profile',

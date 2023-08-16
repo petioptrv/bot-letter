@@ -6,3 +6,6 @@ class RedisConfig(Config):
     redis_port: int
     redis_password: str
     cache_items_per_user: int
+
+
+redis_config = RedisConfig()

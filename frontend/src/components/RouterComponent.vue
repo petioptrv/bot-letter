@@ -3,9 +3,10 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component } from 'vue-property-decorator';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class RouterComponent extends Vue {
+export default class RouterComponent extends AdaptedVue {
 }
 </script>

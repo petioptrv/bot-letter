@@ -30,15 +30,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { Store } from 'vuex';
-import { IUserProfileUpdate } from '@/interfaces';
+import { Component } from 'vue-property-decorator';
 import { appName } from '@/env';
 import { commitAddNotification } from '@/store/main/mutations';
 import { dispatchResetPassword } from '@/store/main/actions';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class UserProfileEdit extends Vue {
+export default class UserProfileEdit extends AdaptedVue {
   public appName = appName;
   public valid = true;
   public password1 = '';
@@ -56,7 +55,7 @@ export default class UserProfileEdit extends Vue {
 
   public cancel() {
     if (this.$route.path != '/') {
-      this.$router.push('/');
+      this.$router.adaptedPush('/');
     }
   }
 
@@ -68,7 +67,7 @@ export default class UserProfileEdit extends Vue {
         color: 'error',
       });
       if (this.$route.path != '/recover-password') {
-        this.$router.push('/recover-password');
+        this.$router.adaptedPush('/recover-password');
       }
     } else {
       return token;
@@ -81,7 +80,7 @@ export default class UserProfileEdit extends Vue {
       if (token) {
         await dispatchResetPassword(this.$store, { token, password: this.password1 });
         if (this.$route.path != '/') {
-          this.$router.push('/');
+          this.$router.adaptedPush('/');
         }
       }
     }

@@ -7,14 +7,15 @@
     </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { Component, Prop, Watch } from 'vue-property-decorator';
 import { AppNotification } from '@/store/main/state';
 import { commitRemoveNotification } from '@/store/main/mutations';
 import { readFirstNotification } from '@/store/main/getters';
 import { dispatchRemoveNotification } from '@/store/main/actions';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class NotificationsManager extends Vue {
+export default class NotificationsManager extends AdaptedVue {
     public show: boolean = false;
     public text: string = '';
     public showProgress: boolean = false;

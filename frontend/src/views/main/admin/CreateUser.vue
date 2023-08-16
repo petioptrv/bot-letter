@@ -37,16 +37,15 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component } from 'vue-property-decorator';
 import {
-  IUserProfile,
-  IUserProfileUpdate,
   IUserProfileCreate,
 } from '@/interfaces';
 import { dispatchGetUsers, dispatchCreateUser } from '@/store/admin/actions';
+import {AdaptedVue} from "@/adaptedVue";
 
 @Component
-export default class CreateUser extends Vue {
+export default class CreateUser extends AdaptedVue {
   public valid = false;
   public fullName: string = '';
   public email: string = '';
@@ -91,7 +90,7 @@ export default class CreateUser extends Vue {
       updatedProfile.password = this.password1;
       await dispatchCreateUser(this.$store, updatedProfile);
       if (this.$route.path != 'main/admin/users') {
-        this.$router.push('/main/admin/users');
+        this.$router.adaptedPush('/main/admin/users');
       }
     }
   }

@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from app.base_types import CacheItem, NewsArticleSummary, NewsletterItem
 from app.cache.redis.aio_redis_cache import AioRedisCache
-from app.cache.redis.redis_utils import RedisConfig
+from app.cache.redis.redis_utils import RedisConfig, redis_config
 from app.core.api_provider import APIProvider
 from app.core.data_processors.openai.openai import OpenAI
 from app.core.data_processors.openai.openai_utils import (
@@ -19,7 +19,10 @@ from app.core.data_processors.openai.openai_utils import (
     OpenAIRoles,
 )
 from app.core.data_providers.news_data_io.news_data_io import NewsDataIO
-from app.core.data_providers.news_data_io.news_data_io_utils import NewsDataIOConfig
+from app.core.data_providers.news_data_io.news_data_io_utils import (
+    NewsDataIOConfig,
+    news_data_io_config,
+)
 from app.core.newsletter_formatter import NewsletterFormatter
 from app.core.selection_algos.duplicates_remover import DuplicatesRemover
 from app.core.selection_algos.representative_items_algo import RepresentativeItemsAlgo
@@ -62,7 +65,7 @@ async def generate_newsletter(search_term):
     )
     api_provider_ = APIProvider()
 
-    news_data_io = NewsDataIO(api_provider=api_provider_, config=NewsDataIOConfig())
+    news_data_io = NewsDataIO(api_provider=api_provider_, config=news_data_io_config)
     response = await news_data_io.get_last_day_news(topic=search_term)
 
     log_for_newsletter_generation(
@@ -72,8 +75,7 @@ async def generate_newsletter(search_term):
     )
 
     openai = OpenAI(api_provider=api_provider_, config=OpenAIConfig())
-    cache_config = RedisConfig()
-    cache = AioRedisCache(config=cache_config)
+    cache = AioRedisCache(config=redis_config)
     await cache.initialize()
     new_items = []
 

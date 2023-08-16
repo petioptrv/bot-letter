@@ -8,6 +8,7 @@ import { State } from '../state';
 import {
     commitAddNotification,
     commitRemoveNotification,
+    commitSetCanCreateSubscriptions,
     commitSetLoggedIn,
     commitSetLogInError,
     commitSetToken,
@@ -28,6 +29,7 @@ export const actions = {
                 commitSetLoggedIn(context, true);
                 commitSetLogInError(context, false);
                 await dispatchGetUserProfile(context);
+                await dispatchCheckCanCreateSubscriptions(context);
                 await dispatchRouteLoggedIn(context);
                 commitAddNotification(context, { content: 'Logged in', color: 'success' });
             } else {
@@ -44,6 +46,14 @@ export const actions = {
             if (response.data) {
                 commitSetUserProfile(context, response.data);
             }
+        } catch (error) {
+            await dispatchCheckApiError(context, error as AxiosError);
+        }
+    },
+    async actionCheckCanCreateSubscriptions(context: MainContext) {
+        try {
+            const canCreateSubscriptions = await api.canCreateSubscription(context.state.token);
+            commitSetCanCreateSubscriptions(context, canCreateSubscriptions.data);
         } catch (error) {
             await dispatchCheckApiError(context, error as AxiosError);
         }
@@ -75,9 +85,11 @@ export const actions = {
             }
             if (token) {
                 try {
-                    const response = await api.getMe(token);
+                    const userResponse = await api.getMe(token);
+                    const canCreateSubscriptions = await api.canCreateSubscription(token);
                     commitSetLoggedIn(context, true);
-                    commitSetUserProfile(context, response.data);
+                    commitSetUserProfile(context, userResponse.data);
+                    commitSetCanCreateSubscriptions(context, canCreateSubscriptions.data);
                 } catch (error) {
                     await dispatchRemoveLogIn(context);
                 }
@@ -101,7 +113,7 @@ export const actions = {
     },
     actionRouteLogOut(context: MainContext) {
         if (router.currentRoute.path !== '/login') {
-            router.push('/login');
+            router.adaptedPush('/login');
         }
     },
     async actionCheckApiError(context: MainContext, payload: AxiosError) {
@@ -111,7 +123,7 @@ export const actions = {
     },
     actionRouteLoggedIn(context: MainContext) {
         if (router.currentRoute.path === '/login' || router.currentRoute.path === '/') {
-            router.push('/main');
+            router.adaptedPush('/main');
         }
     },
     async removeNotification(context: MainContext, payload: { notification: AppNotification, timeout: number }) {
@@ -161,6 +173,7 @@ const { dispatch } = getStoreAccessors<MainState | any, State>('');
 export const dispatchCheckApiError = dispatch(actions.actionCheckApiError);
 export const dispatchCheckLoggedIn = dispatch(actions.actionCheckLoggedIn);
 export const dispatchGetUserProfile = dispatch(actions.actionGetUserProfile);
+export const dispatchCheckCanCreateSubscriptions = dispatch(actions.actionCheckCanCreateSubscriptions);
 export const dispatchLogIn = dispatch(actions.actionLogIn);
 export const dispatchLogOut = dispatch(actions.actionLogOut);
 export const dispatchUserLogOut = dispatch(actions.actionUserLogOut);

@@ -24,7 +24,13 @@ class NewsArticle(Model):
     image_url: Optional[str]
     search_term: str
     publishing_timestamp: int
+    description: str
     content: str
+
+
+class NewsArticleSearchResults(Model):
+    results_count: int
+    results: list[NewsArticle]
 
 
 class NewsArticleSummary(Model):

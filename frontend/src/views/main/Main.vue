@@ -1,4 +1,4 @@
-<template>
+<template v-slot:activator="{ on }">
   <div>
     <v-navigation-drawer persistent :mini-variant="miniDrawer" v-model="showDrawer" fixed app>
       <v-layout column fill-height>
@@ -84,7 +84,7 @@
       <v-app-bar-title v-text="appName"></v-app-bar-title>
       <v-spacer></v-spacer>
       <v-menu bottom left offset-y>
-        <v-btn slot="activator" icon>
+        <v-btn v-on="on" icon>
           <v-icon>more_vert</v-icon>
         </v-btn>
         <v-list>
@@ -118,12 +118,18 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Component } from 'vue-property-decorator';
 
 import { appName } from '@/env';
-import { readDashboardMiniDrawer, readDashboardShowDrawer, readHasAdminAccess } from '@/store/main/getters';
+import {
+  readDashboardMiniDrawer,
+  readDashboardShowDrawer,
+  readHasAdminAccess,
+} from '@/store/main/getters';
 import { commitSetDashboardShowDrawer, commitSetDashboardMiniDrawer } from '@/store/main/mutations';
-import { dispatchUserLogOut } from '@/store/main/actions';
+import {dispatchCheckCanCreateSubscriptions, dispatchGetUserProfile, dispatchUserLogOut} from '@/store/main/actions';
+import {AdaptedVue} from "@/adaptedVue";
+import {commitClearSubscriptionSearchResults} from "@/store/subscriptions/mutations";
 
 const routeGuardMain = async (to, from, next) => {
   if (to.path === '/main') {
@@ -134,7 +140,7 @@ const routeGuardMain = async (to, from, next) => {
 };
 
 @Component
-export default class Main extends Vue {
+export default class Main extends AdaptedVue {
   public appName = appName;
 
   public beforeRouteEnter(to, from, next) {
@@ -143,6 +149,12 @@ export default class Main extends Vue {
 
   public beforeRouteUpdate(to, from, next) {
     routeGuardMain(to, from, next);
+  }
+
+  public beforeRouteLeave(to: any, from: any, next: any) {
+    dispatchCheckCanCreateSubscriptions(this.$store);
+    dispatchGetUserProfile(this.$store);
+    next();
   }
 
   get miniDrawer() {

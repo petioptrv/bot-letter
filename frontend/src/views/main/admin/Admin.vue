@@ -3,9 +3,10 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component } from 'vue-property-decorator';
 import { store } from '@/store';
 import { readHasAdminAccess } from '@/store/main/getters';
+import {AdaptedVue} from "@/adaptedVue";
 
 const routeGuardAdmin = async (to, from, next) => {
   if (!readHasAdminAccess(store)) {
@@ -16,7 +17,7 @@ const routeGuardAdmin = async (to, from, next) => {
 };
 
 @Component
-export default class Admin extends Vue {
+export default class Admin extends AdaptedVue {
   public beforeRouteEnter(to, from, next) {
     routeGuardAdmin(to, from, next);
   }

@@ -11,6 +11,9 @@ max_tries = 60 * 5  # 5 minutes
 wait_seconds = 1
 
 
+# todo: create a redis pre-start
+
+
 @retry(
     stop=stop_after_attempt(max_tries),
     wait=wait_fixed(wait_seconds),

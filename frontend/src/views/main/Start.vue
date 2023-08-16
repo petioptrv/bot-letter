@@ -3,10 +3,11 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component } from 'vue-property-decorator';
 import { store } from '@/store';
-import { dispatchCheckLoggedIn } from '@/store/main/actions';
+import { dispatchCheckLoggedIn} from '@/store/main/actions';
 import { readIsLoggedIn } from '@/store/main/getters';
+import {AdaptedVue} from "@/adaptedVue";
 
 const startRouteGuard = async (to, from, next) => {
   await dispatchCheckLoggedIn(store);
@@ -26,7 +27,7 @@ const startRouteGuard = async (to, from, next) => {
 };
 
 @Component
-export default class Start extends Vue {
+export default class Start extends AdaptedVue {
   public beforeRouteEnter(to, from, next) {
     startRouteGuard(to, from, next);
   }
