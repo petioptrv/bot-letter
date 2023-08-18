@@ -8,7 +8,7 @@ export const mutations = {
         state.searchResults = payload;
     },
     clearSubscriptionSearchResults(state: SubscriptionsState) {
-        state.searchResults = {results_count: 0, results: []};
+        state.searchResults = {total_results_count: 0, results: []};
     },
 };
 

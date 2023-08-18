@@ -87,6 +87,8 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD?Variable not set} --loadmodule /opt/redis-stack/lib/redisearch.so
     volumes:
       - redis-data:/data
+    networks:
+      - default
 
   pgadmin:
     image: dpage/pgadmin4
@@ -148,6 +150,7 @@ services:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     depends_on:
       - db
+      - cache
     env_file:
       - .env-docker
     environment:
@@ -172,6 +175,7 @@ services:
     depends_on:
       - db
       - queue
+      - cache
     env_file:
       - .env-docker
     environment:

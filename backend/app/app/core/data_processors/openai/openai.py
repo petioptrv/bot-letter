@@ -30,6 +30,7 @@ class OpenAI:
         model: OpenAIModels,
         messages: List[OpenAIChatCompletion],
     ) -> OpenAIChatCompletion:
+        # todo: attach user IDs to requests: https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids
         url = f"{self._base_url}/chat/completions"
         headers = self._build_auth_headers()
         headers["Content-Type"] = "application/json"

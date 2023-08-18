@@ -18,7 +18,7 @@ export interface ISubscriptionSearchResult {
 }
 
 export interface ISubscriptionSearchResults {
-    results_count: number;
+    total_results_count: number;
     results: ISubscriptionSearchResult[];
 }
 

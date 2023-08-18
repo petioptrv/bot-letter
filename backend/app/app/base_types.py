@@ -29,7 +29,7 @@ class NewsArticle(Model):
 
 
 class NewsArticleSearchResults(Model):
-    results_count: int
+    total_results_count: int
     results: list[NewsArticle]
 
 

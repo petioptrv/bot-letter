@@ -25,7 +25,7 @@ class AioRedisCache(CacheBase):
 
     async def initialize(self):
         self._conn = await aioredis.from_url(
-            url=f"redis://{self._redis_host}:{self._redis_port}",
+            url=f"redis://{self._redis_host}:{self._redis_port}/0",
             password=self._redis_password,
             encoding="utf-8",
             decode_responses=True,
@@ -41,6 +41,9 @@ class AioRedisCache(CacheBase):
         if not await self._conn.exists(item_name):
             await self._conn.hset(name=item_name, mapping=item)
 
+    async def clear_all_items(self, search_term: str):
+        await self.clear_oldest_items(search_term=search_term, max_items_to_keep=0)
+
     async def clear_oldest_items(self, search_term: str, max_items_to_keep: int):
         item_name_prefix = self._build_item_name_prefix(search_term=search_term)
         keys = await self._conn.keys(f"{item_name_prefix}:*")
@@ -50,9 +53,9 @@ class AioRedisCache(CacheBase):
         items = await pipeline.execute()
         keys_items = zip(keys, items)
         sorted_keys_items = sorted(
-            keys_items, key=lambda x: json.loads(x[1]["article"])["publishing_timestamp"], reverse=False
+            keys_items, key=lambda x: json.loads(x[1]["article"])["publishing_timestamp"], reverse=True
         )
-        keys_to_remove = [key for key, _ in sorted_keys_items[:-max_items_to_keep]]
+        keys_to_remove = [key for key, _ in sorted_keys_items[max_items_to_keep:]]
         if len(keys_to_remove) != 0:
             await self._conn.delete(*keys_to_remove)
 
@@ -81,6 +84,7 @@ class AioRedisCache(CacheBase):
             "article": json.dumps(cache_item.article.dict()),
             "model": cache_item.embedding.model,
             "embedding": base64.b64encode(s=cache_item.embedding_vector.tobytes()),
+            "title": cache_item.article.title,
         }
         return item
 

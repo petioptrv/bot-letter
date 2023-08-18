@@ -42,13 +42,13 @@
       </v-card-text>
       <v-card-actions>
         <v-btn @click="search" :disabled="!valid">Search</v-btn>
-        <v-btn @click="submit" v-if="userProfileSubscriptions.results_count != 0">Create</v-btn>
+        <v-btn @click="submit" v-if="userProfileSubscriptions.total_results_count != 0">Create</v-btn>
         <v-btn to="/main/dashboard">Cancel</v-btn>
       </v-card-actions>
-      <v-card-text v-if="userProfileSubscriptions.results_count != 0">
-        Total results: {{userProfileSubscriptions.results_count}}
+      <v-card-text v-if="userProfileSubscriptions.total_results_count != 0">
+        Total results: {{ userProfileSubscriptions.total_results_count }}
       </v-card-text>
-      <v-card-text v-if="userProfileSubscriptions.results_count != 0">
+      <v-card-text v-if="userProfileSubscriptions.total_results_count != 0">
         <h2>{{userProfileSubscriptions.results.length}} most recent results</h2>
       </v-card-text>
       <v-card class="ma-3 pa-3" v-for="searchResult in userProfileSubscriptions.results">

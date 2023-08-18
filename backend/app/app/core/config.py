@@ -84,6 +84,8 @@ class Settings(Config):
     FIRST_SUPERUSER_PASSWORD: str
     USERS_OPEN_REGISTRATION: bool = False
     QUEUE_URL: str = "queue"
+    TIMEZONE: str = "America/New_York"
+    NEWSLETTER_TIME: str = "09:00"
     MAX_SUBSCRIPTIONS: int = 1
     MAX_SUBSCRIPTION_SEARCH_RESULTS: int = 10
 

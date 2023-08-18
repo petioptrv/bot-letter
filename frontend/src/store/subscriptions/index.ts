@@ -5,7 +5,7 @@ import {getters} from "@/store/subscriptions/getters";
 
 const defaultState: SubscriptionsState = {
     searchResults: {
-        results_count: 0,
+        total_results_count: 0,
         results: [],
     }
 }

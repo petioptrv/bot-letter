@@ -37,7 +37,7 @@ class NewsDataIO:
             for article in articles_data["results"]
             if article["content"] is not None and article["description"] is not None
         ]
-        result = NewsArticleSearchResults(results_count=articles_data["totalResults"], results=articles)
+        result = NewsArticleSearchResults(total_results_count=articles_data["totalResults"], results=articles)
 
         return result
 
