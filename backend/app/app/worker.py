@@ -12,11 +12,6 @@ client_sentry = Client(settings.SENTRY_DSN)
 
 
 @celery_app.task(acks_late=True)
-def test_celery(word: str) -> str:
-    return f"test task return {word}"
-
-
-@celery_app.task(acks_late=True)
 def generate_all_newsletters():
     try:
         db = SessionLocal()
@@ -34,3 +29,7 @@ def generate_all_newsletters():
 @celery_app.task(acks_late=True)  # todo: test how many times it retries — may rack up OpenAI API costs
 def generate_newsletter_task(search_term: str, user_id: int):
     asyncio.run(generate_newsletter(search_term=search_term, user_id=user_id))
+
+
+if __name__ == "__main__":
+    generate_all_newsletters()

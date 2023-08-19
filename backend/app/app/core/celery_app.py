@@ -7,7 +7,6 @@ celery_app = Celery("worker", broker=f"amqp://guest@{settings.QUEUE_URL}//")
 celery_app.conf.timezone = settings.TIMEZONE
 
 celery_app.conf.task_routes = {
-    "app.worker.test_celery": "main-queue",
     "app.worker.generate_newsletter_task": "main-queue",
     "app.worker.generate_all_newsletters": "main-queue",
 }
