@@ -87,7 +87,8 @@ class Settings(Config):
     TIMEZONE: str = "America/New_York"
     NEWSLETTER_TIME: str = "09:00"
     MAX_SUBSCRIPTIONS: int = 1
-    MAX_SUBSCRIPTION_SEARCH_RESULTS: int = 10
+    MAX_SUBSCRIPTION_SEARCH_RESULTS_TO_RETURN_TO_USER: int = 10
+    DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT: int = 10
 
     class Config:
         case_sensitive = True

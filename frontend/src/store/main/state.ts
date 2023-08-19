@@ -12,6 +12,7 @@ export interface MainState {
     logInError: boolean;
     userProfile: IUserProfile | null;
     canCreateSubscriptions: boolean;
+    remainingSubscriptionSearches: number;
     dashboardMiniDrawer: boolean;
     dashboardShowDrawer: boolean;
     notifications: AppNotification[];

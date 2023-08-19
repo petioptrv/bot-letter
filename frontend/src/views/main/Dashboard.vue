@@ -20,11 +20,13 @@
             the previous day. Each article will be succinctly summarized, and ready for your morning read
             (cup of joe sold separately ☕️).
           </p>
-          <p>
-            ⚠️ Please keep in mind that this service is in the devel opment phase and bugs are expected.
-            If you encounter any issues, or have suggestions for improvement, please
-            at <a href="mailto:botletternews@gmail.com">email us</a>.
-          </p>
+          <v-alert style="background: antiquewhite">
+            <p>
+              ⚠️ Please keep in mind that this service is in the development phase and bugs are expected.
+              If you encounter any issues, or have suggestions for improvement, please
+              at <a href="mailto:botletternews@gmail.com">email us</a>.
+            </p>
+          </v-alert>
         </div>
       </v-card-text>
     </v-card>
@@ -50,7 +52,11 @@ import {readCanCreateSubscriptions, readUserProfile} from '@/store/main/getters'
 import {ISubscription} from "@/interfaces";
 import {AdaptedVue} from "@/adaptedVue";
 import {dispatchSubscriptionDelete} from "@/store/subscriptions/actions";
-import {dispatchCheckCanCreateSubscriptions, dispatchGetUserProfile} from "@/store/main/actions";
+import {
+  dispatchCheckCanCreateSubscriptions,
+  dispatchCheckRemainingSubscriptionSearches,
+  dispatchGetUserProfile
+} from "@/store/main/actions";
 
 @Component
 export default class Dashboard extends AdaptedVue {
@@ -82,6 +88,7 @@ export default class Dashboard extends AdaptedVue {
     await dispatchSubscriptionDelete(this.$store, subscription);
     await dispatchGetUserProfile(this.$store);
     await dispatchCheckCanCreateSubscriptions(this.$store);
+    await dispatchCheckRemainingSubscriptionSearches(this.$store);
   }
 }
 </script>

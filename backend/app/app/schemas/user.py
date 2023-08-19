@@ -22,6 +22,8 @@ class UserCreate(UserBase):
 # Properties to receive via API on update
 class UserUpdate(UserBase):
     password: Optional[str] = None
+    subscription_search_count: Optional[int] = None
+    last_subscription_search_timestamp: Optional[int] = None
 
 
 class UserInDBBase(UserBase):

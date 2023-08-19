@@ -127,7 +127,12 @@ import {
   readHasAdminAccess,
 } from '@/store/main/getters';
 import { commitSetDashboardShowDrawer, commitSetDashboardMiniDrawer } from '@/store/main/mutations';
-import {dispatchCheckCanCreateSubscriptions, dispatchGetUserProfile, dispatchUserLogOut} from '@/store/main/actions';
+import {
+  dispatchCheckCanCreateSubscriptions,
+  dispatchCheckRemainingSubscriptionSearches,
+  dispatchGetUserProfile,
+  dispatchUserLogOut
+} from '@/store/main/actions';
 import {AdaptedVue} from "@/adaptedVue";
 import {commitClearSubscriptionSearchResults} from "@/store/subscriptions/mutations";
 
@@ -153,6 +158,7 @@ export default class Main extends AdaptedVue {
 
   public beforeRouteLeave(to: any, from: any, next: any) {
     dispatchCheckCanCreateSubscriptions(this.$store);
+    dispatchCheckRemainingSubscriptionSearches(this.$store);
     dispatchGetUserProfile(this.$store);
     next();
   }

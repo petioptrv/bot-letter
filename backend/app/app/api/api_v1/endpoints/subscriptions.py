@@ -30,11 +30,25 @@ def can_create(
     return len(current_user.subscriptions) < settings.MAX_SUBSCRIPTIONS
 
 
+@router.get("/remaining-searches", response_model=int)
+def remaining_searches(
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> int:
+    """
+    Get the current user's remaining subscription searches.
+    """
+    return (
+        current_user.max_subscription_search_count
+        - current_user.subscription_search_count
+    )
+
+
 @router.get("/search", response_model=NewsArticleSearchResults)
-@per_user_limiter.limit("10/day")
+# @per_user_limiter.limit("10/day")
 async def search(
-    request: Request,
-    response: Response,
+    # request: Request,
+    # response: Response,
     search_term: str,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_active_user),
@@ -45,14 +59,20 @@ async def search(
     if len(search_term) == 0:
         raise HTTPException(status_code=400, detail="Search term cannot be empty.")
 
+    if not crud.user.check_user_subscription_search_within_limits(db_object=current_user):
+        raise HTTPException(status_code=400, detail="Subscription search limit reached.")
+
     api_provider = APIProvider()
     data_provider = NewsDataIO(api_provider=api_provider, config=news_data_io_config)
+    crud.user.increment_user_subscription_search_count(db=db, db_object=current_user)
     try:
         results = await data_provider.get_last_day_news(
-            topic=search_term, max_page_count=settings.MAX_SUBSCRIPTION_SEARCH_RESULTS
+            topic=search_term, max_page_count=settings.MAX_SUBSCRIPTION_SEARCH_RESULTS_TO_RETURN_TO_USER
         )
     except Exception:
+        # todo: decrement search count
         raise HTTPException(status_code=500, detail="Failed to get search results.")
+
     return results
 
 

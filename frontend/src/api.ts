@@ -21,8 +21,11 @@ export const api = {
   async getMe(token: string) {
     return axios.get<IUserProfile>(`${apiUrl}/api/v1/users/me`, authHeaders(token));
   },
-  async canCreateSubscription(token: string) {
+  async getCanCreateSubscription(token: string) {
     return axios.get(`${apiUrl}/api/v1/subscriptions/can-create`, authHeaders(token));
+  },
+  async getRemainingSubscriptionSearches(token: string) {
+    return axios.get(`${apiUrl}/api/v1/subscriptions/remaining-searches`, authHeaders(token));
   },
   async updateMe(token: string, data: IUserProfileUpdate) {
     return axios.put<IUserProfile>(`${apiUrl}/api/v1/users/me`, data, authHeaders(token));
