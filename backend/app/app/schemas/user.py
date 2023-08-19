@@ -1,6 +1,7 @@
 from typing import Optional, List
 
 from app.base_types import EmailStr, Model
+from app.core.config import settings
 from app.schemas.subscription import SubscriptionBase, SubscriptionInDB
 
 
@@ -9,6 +10,9 @@ class UserBase(Model):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
+    last_subscription_search_timestamp: Optional[int] = 0
+    subscription_search_count: Optional[int] = 0
+    max_subscription_search_count: Optional[int] = settings.DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT
     is_superuser: bool = False
     subscriptions: List[SubscriptionBase] = []
 
