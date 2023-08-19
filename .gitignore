@@ -777,3 +777,4 @@ $RECYCLE.BIN/
 
 **/.idea/*
 
+/.env-deploy
