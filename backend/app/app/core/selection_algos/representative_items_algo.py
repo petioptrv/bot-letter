@@ -19,8 +19,8 @@ class RepresentativeItemsAlgo:
         cache_items_matrix = np.array([item.embedding.vector for item in cache_items])
         average_vector = np.average(cache_items_matrix, axis=0)
         distances_from_average = np.linalg.norm(new_items_matrix - average_vector, axis=1)
-        sorted_indices = np.argsort(distances_from_average)
-        sorted_items = [new_items[i] for i in sorted_indices[:k]]
+        sorted_indices = np.argsort(distances_from_average)[:k]
+        sorted_items = [new_items[i] for i in sorted_indices]
         # processed_items_count = k
         # done = False
         # while not done:

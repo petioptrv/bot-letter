@@ -19,10 +19,11 @@ class NewsDataIO:
         topic: str,
         categories: Optional[List[NewsDataIOCategories]] = None,
         max_page_count: int = sys.maxsize,
+        language: str = "en"
     ) -> NewsArticleSearchResults:
         # todo: consider filtering articles published by several news outlets (i.e. exact same article, but diff urls)
         articles_data = await self._get_news_data(
-            topic=topic, categories=categories, max_page_count=max_page_count
+            topic=topic, categories=categories, max_page_count=max_page_count, language=language
         )
         articles = [
             NewsArticle(
@@ -46,9 +47,11 @@ class NewsDataIO:
         topic: str,
         categories: Optional[List[NewsDataIOCategories]],
         max_page_count: int,
+        language: str,
     ) -> Dict:
         params = {
             "q": topic,
+            "language": language,
         }
         if categories is not None and len(categories) != 0:
             params["category"] = ",".join(categories)

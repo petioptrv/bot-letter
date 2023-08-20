@@ -20,15 +20,17 @@ def generate_all_newsletters():
             for subscription in user.subscriptions:
                 celery_app.send_task(
                     name="app.worker.generate_newsletter_task",
-                    args=[subscription.search_term, user.id],
+                    args=[subscription.search_term, user.id, user.email],
                 )
     finally:
         db.close()
 
 
 @celery_app.task(acks_late=True)  # todo: test how many times it retries — may rack up OpenAI API costs
-def generate_newsletter_task(search_term: str, user_id: int):
-    asyncio.run(generate_newsletter(search_term=search_term, user_id=user_id))
+def generate_newsletter_task(search_term: str, user_id: int, email: str):
+    asyncio.run(
+        generate_newsletter(search_term=search_term, user_id=user_id, email=email)
+    )
 
 
 if __name__ == "__main__":

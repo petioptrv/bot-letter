@@ -777,5 +777,5 @@ $RECYCLE.BIN/
 
 **/.idea/*
 
-/.env-deploy
+/.env*
 /bot-letter.pem

@@ -21,15 +21,35 @@ class NewsletterFormatter:
         return Newsletter(content=news_letter_content)
 
     @staticmethod
+    def format_newsletter_html_no_new_articles(search_term: str) -> str:
+        mjml = f"""
+            <mjml>
+              <mj-body background-color="#fff">
+              <mj-section>
+                  <mj-column>
+                    <mj-text font-size="16px" color="#555">
+                        No new articles found in the past 24 hours for the search term {search_term}.
+                    </mj-text>
+                  </mj-column>
+                </mj-section>
+              </mj-section>
+              </mj-body>
+            </mjml>
+        """
+        html_output = mjml_to_html(mjml)
+        
+        return html_output.html
+
+    @staticmethod
     def format_newsletter_html(newsletter_items: List[NewsletterItem]) -> str:
         base_mjml = f"""
             <mjml>
               <mj-body background-color="#fff">
               <mj-section>
-                  <mj-column>
+                <mj-column>
                     <mj-text font-size="16px" color="#555">Search Term: {newsletter_items[0].article.search_term}</mj-text>
-                  </mj-column>
-                </mj-section>
+                </mj-column>
+              </mj-section>
             """
 
         for item in newsletter_items:

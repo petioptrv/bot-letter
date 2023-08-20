@@ -89,6 +89,7 @@ class Settings(Config):
     MAX_SUBSCRIPTIONS: int = 1
     MAX_SUBSCRIPTION_SEARCH_RESULTS_TO_RETURN_TO_USER: int = 10
     DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT: int = 10
+    MAX_ARTICLES_PER_NEWSLETTER: int = 5
 
     class Config:
         case_sensitive = True
