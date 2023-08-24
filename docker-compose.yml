@@ -73,7 +73,7 @@ services:
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
     env_file:
-      - .env-deploy
+      - .env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
     deploy:
@@ -100,7 +100,7 @@ services:
     depends_on:
       - db
     env_file:
-      - .env-deploy
+      - .env
     deploy:
       labels:
         - traefik.enable=true
@@ -128,7 +128,7 @@ services:
       - ${TRAEFIK_PUBLIC_NETWORK?Variable not set}
       - default
     env_file:
-      - .env-deploy
+      - .env
     command:
       - "--broker=amqp://guest@queue:5672//"
       # For the "Broker" tab to work in the flower UI, uncomment the following command argument,
@@ -154,7 +154,7 @@ services:
       - db
       - cache
     env_file:
-      - .env-deploy
+      - .env
     environment:
       - SERVER_NAME=${DOMAIN?Variable not set}
       - SERVER_HOST=https://${DOMAIN?Variable not set}
@@ -179,7 +179,7 @@ services:
       - queue
       - cache
     env_file:
-      - .env-deploy
+      - .env
     environment:
       - SERVER_NAME=${DOMAIN?Variable not set}
       - SERVER_HOST=https://${DOMAIN?Variable not set}

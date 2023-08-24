@@ -1,3 +1,11 @@
+# Local Development
+`docker-compose.override-development.yml` should be renamed to `docker-compose.override.yml` in order to
+be applied to the `docker-compose.yml` file. This file is used to override the `docker-compose.yml` file for local
+development docker compose runs.
+
+`.env` is used for loca development of `backend` and `frontend`, non-docker runs. `docker-compose.override.yml`
+should be configured to ready `.env-development` instead in order to deploy the docker containers successfully.
+
 # Debugging Locally
 
 ## Backend

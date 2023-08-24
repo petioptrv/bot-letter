@@ -1,3 +1,7 @@
+# This file is configured for local development.
+# Rename it to docker-compose.override.yml to use it.
+# Note: .env-development must exist.
+
 version: "3.3"
 services:
 
@@ -31,14 +35,20 @@ services:
   pgadmin:
     ports:
       - "5050:5050"
+    env_file:
+      - .env-development
 
   flower:
     ports:
       - "5555:5555"
+    env_file:
+      - .env-development
 
   db:
     ports:
       - "8001:5432"
+    env_file:
+      - .env-development
 
   cache:
     ports:
@@ -52,6 +62,8 @@ services:
   backend:
     ports:
       - "8888:8888"
+    env_file:
+      - .env-development
     volumes:
       - ./backend/app:/app
     environment:
@@ -72,6 +84,8 @@ services:
       - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=80
 
   celeryworker:
+    env_file:
+      - .env-development
     volumes:
       - ./backend/app:/app
     environment:

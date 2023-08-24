@@ -779,3 +779,5 @@ $RECYCLE.BIN/
 
 /.env*
 /bot-letter.pem
+/docker-compose.override.yml
+qodana.yaml
