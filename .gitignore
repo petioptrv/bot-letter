@@ -781,3 +781,6 @@ $RECYCLE.BIN/
 /bot-letter.pem
 /docker-compose.override.yml
 qodana.yaml
+
+/frontend/**/*.js
+/frontend/**/*.js.map
