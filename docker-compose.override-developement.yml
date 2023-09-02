@@ -36,19 +36,19 @@ services:
     ports:
       - "5050:5050"
     env_file:
-      - .env-development
+      - .env-docker
 
   flower:
     ports:
       - "5555:5555"
     env_file:
-      - .env-development
+      - .env-docker
 
   db:
     ports:
       - "8001:5432"
     env_file:
-      - .env-development
+      - .env-docker
 
   cache:
     ports:
@@ -63,7 +63,7 @@ services:
     ports:
       - "8888:8888"
     env_file:
-      - .env-development
+      - .env-docker
     volumes:
       - ./backend/app:/app
     environment:
@@ -85,7 +85,7 @@ services:
 
   celeryworker:
     env_file:
-      - .env-development
+      - .env-docker
     volumes:
       - ./backend/app:/app
     environment:

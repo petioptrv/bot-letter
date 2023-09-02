@@ -345,7 +345,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -777,7 +776,9 @@ $RECYCLE.BIN/
 
 **/.idea/*
 
-/.env*
+/.env
+/.env-docker
+/.env-production
 /bot-letter.pem
 /docker-compose.override.yml
 qodana.yaml
