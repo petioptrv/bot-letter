@@ -20,3 +20,7 @@ should be configured to ready `.env-development` instead in order to deploy the 
 - Ensure the frontend `.env` has `VUE_APP_DOMAIN_DEV=127.0.0.1:8000` in order to connect to a local backend
 - I had to update Node to 18 because {REASON?}, which required updating node to 18 in the frontend Dockerfile
   - Check the changes in the commit "FRONTEND ENV FIXES" to get the necessary changes to make this work
+
+# Deployment
+
+See [this post](https://github.com/tiangolo/full-stack-fastapi-postgresql/issues/322).
