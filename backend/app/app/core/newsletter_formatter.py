@@ -28,7 +28,7 @@ class NewsletterFormatter:
               <mj-section>
                   <mj-column>
                     <mj-text font-size="16px" color="#555">
-                        No new articles found in the past 24 hours for the search term {search_term}.
+                        No new articles found in the past 24 hours for the newsletter description "{search_term}".
                     </mj-text>
                   </mj-column>
                 </mj-section>
@@ -37,7 +37,7 @@ class NewsletterFormatter:
             </mjml>
         """
         html_output = mjml_to_html(mjml)
-        
+
         return html_output.html
 
     @staticmethod
@@ -45,11 +45,6 @@ class NewsletterFormatter:
         base_mjml = f"""
             <mjml>
               <mj-body background-color="#fff">
-              <mj-section>
-                <mj-column>
-                    <mj-text font-size="16px" color="#555">Search Term: {newsletter_items[0].article.search_term}</mj-text>
-                </mj-column>
-              </mj-section>
             """
 
         for item in newsletter_items:
@@ -60,6 +55,9 @@ class NewsletterFormatter:
                     <mj-text font-size="16px" color="#000">
                         <h1>{item.article.title}</h1>
                     </mj-text>"""
+            if item.article.image_url is not None:
+                section += f"""
+                    <mj-image src="{ item.article.image_url}"></mj-image>"""
             for paragraph in item.summary.summary.split("\n"):
                 section += f"""
                     <mj-text font-size="16px" color="#555">

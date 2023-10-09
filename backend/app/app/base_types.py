@@ -5,8 +5,12 @@ from pydantic import (
     EmailStr as PydanticEmailStr,
     AnyHttpUrl as PydanticAnyHttpUrl,
     HttpUrl as PydanticHttpUrl,
-    PostgresDsn as PydanticPostgresDsn, BaseModel, ValidationError as PydanticValidationError,
-    validator as pydantic_validator, BaseSettings,
+    PostgresDsn as PydanticPostgresDsn,
+    BaseModel,
+    ValidationError as PydanticValidationError,
+    validator as pydantic_validator,
+    BaseSettings,
+    Field,
 )
 
 
@@ -22,7 +26,7 @@ class NewsArticle(Model):
     title: str
     url: str
     image_url: Optional[str]
-    search_term: str
+    search_term: Optional[str]
     publishing_timestamp: int
     description: str
     content: str
@@ -36,6 +40,10 @@ class NewsArticleSearchResults(Model):
 class NewsArticleSummary(Model):
     summary_title: str
     summary: str
+
+    @property
+    def is_initialized(self):
+        return self.summary_title != "" and self.summary != ""
 
 
 class NewsletterItem(Model):
@@ -58,6 +66,9 @@ class Embedding(Model):
 class CacheItem(Model):
     article: NewsArticle
     embedding: Embedding
+    article_summary: NewsArticleSummary = Field(
+        default=NewsArticleSummary(summary_title="", summary="")
+    )
 
     @property
     def embedding_vector(self):

@@ -28,7 +28,7 @@ async def test_get_last_day_news(api_provider_mock: APIProviderMocker):
     api_provider = APIProvider()
     config = NewsDataIOConfig(news_data_io_api_key="test-api-key")
     client = NewsDataIO(api_provider=api_provider, config=config)
-    response = await client.get_last_day_news(topic="OpenAI")
+    response = await client.get_latest_news(topic="OpenAI")
 
     assert len(response) == 1
 
@@ -37,7 +37,7 @@ async def test_get_last_day_news(api_provider_mock: APIProviderMocker):
     assert article.title == "Test Article"
     assert article.url == "https://test-article.com"
     assert article.image_url == "https://test-article.com/image.jpg"
-    assert article.search_term == "OpenAI"
+    assert article.newsletter_description == "OpenAI"
     assert article.publishing_timestamp == 1612343106
     assert article.content == "Test content"
 
@@ -52,7 +52,7 @@ async def test_get_last_day_news_error(api_provider_mock: APIProviderMocker):
     client = NewsDataIO(api_provider=api_provider, config=config)
 
     with pytest.raises(Exception):
-        await client.get_last_day_news(topic="OpenAI")
+        await client.get_latest_news(topic="OpenAI")
 
 
 if __name__ == "__main__":
@@ -65,6 +65,6 @@ if __name__ == "__main__":
 
     news_data_io = NewsDataIO(api_provider=APIProvider(), config=NewsDataIOConfig())
 
-    resp = asyncio.run(news_data_io.get_last_day_news(topic='"space exploration"'))
+    resp = asyncio.run(news_data_io.get_latest_news(topic='"space exploration"'))
     pprint(resp)
     print(f"len results: {len(resp['results'])}")

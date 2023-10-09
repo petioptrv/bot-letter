@@ -90,6 +90,8 @@ class Settings(Config):
     MAX_SUBSCRIPTION_SEARCH_RESULTS_TO_RETURN_TO_USER: int = 10
     DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT: int = 10
     MAX_ARTICLES_PER_NEWSLETTER: int = 5
+    MAX_IRRELEVANT_ARTICLES_COUNT: int = 5
+    ARTICLES_FETCH_WINDOW: int = 24 * 60 * 60  # * 2  # todo: revert to one day
 
     class Config:
         case_sensitive = True

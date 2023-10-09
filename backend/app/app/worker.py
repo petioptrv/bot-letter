@@ -1,9 +1,12 @@
 import asyncio
+from typing import Optional
 
 from raven import Client
+from sqlalchemy.orm import Session
 
 from app.core.celery_app import celery_app
 from app.core.config import settings
+from app.core.data_providers.articles_fetcher import update_articles_database
 from app.core.newsletter_creator import generate_newsletter
 from app.crud import crud_user
 from app.db.session import SessionLocal
@@ -12,7 +15,13 @@ client_sentry = Client(settings.SENTRY_DSN)
 
 
 @celery_app.task(acks_late=True)
+def update_articles_database_task():
+    asyncio.run(update_articles_database())
+
+
+@celery_app.task(acks_late=True)
 def generate_all_newsletters():
+    db: Optional[Session] = None
     try:
         db = SessionLocal()
         users = crud_user.user.get_all(db=db)
@@ -20,16 +29,21 @@ def generate_all_newsletters():
             for subscription in user.subscriptions:
                 celery_app.send_task(
                     name="app.worker.generate_newsletter_task",
-                    args=[subscription.search_term, user.id, user.email],
+                    args=[subscription.newsletter_description, user.id, user.email],
                 )
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
 
-@celery_app.task(acks_late=True)  # todo: test how many times it retries — may rack up OpenAI API costs
-def generate_newsletter_task(search_term: str, user_id: int, email: str):
+@celery_app.task(
+    acks_late=True
+)  # todo: test how many times it retries — may rack up OpenAI API costs
+def generate_newsletter_task(newsletter_description: str, user_id: int, email: str):
     asyncio.run(
-        generate_newsletter(search_term=search_term, user_id=user_id, email=email)
+        generate_newsletter(
+            newsletter_description=newsletter_description, user_id=user_id, email=email
+        )
     )
 
 

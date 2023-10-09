@@ -18,6 +18,10 @@ class User(Base):
     is_active = Column(Boolean(), default=True)
     last_subscription_search_timestamp = Column(Integer, default=0)
     subscription_search_count = Column(Integer, default=0)
-    max_subscription_search_count = Column(Integer, default=settings.DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT)
+    max_subscription_search_count = Column(
+        Integer, default=settings.DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT
+    )
     is_superuser = Column(Boolean(), default=False)
-    subscriptions: List["Subscription"] = relationship("Subscription", back_populates="owner")
+    subscriptions: List["Subscription"] = relationship(
+        "Subscription", back_populates="owner"
+    )

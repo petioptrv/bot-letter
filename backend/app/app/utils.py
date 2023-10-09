@@ -33,7 +33,9 @@ def send_email(
     logging.info(f"send email result: {response}")
 
 
-def send_newsletter_email(email_to: str, subject: str, content: str, search_term: str) -> None:
+def send_newsletter_email(
+    email_to: str, subject: str, content: str, search_term: str
+) -> None:
     with open(settings.EMAIL_TEMPLATES_DIR / "newsletter.html") as f:
         template_str = f.read()
     send_email(
@@ -104,7 +106,9 @@ def generate_password_reset_token(email: str) -> str:
     expires = now + delta
     exp = expires.timestamp()
     encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email}, settings.SECRET_KEY, algorithm="HS256",
+        {"exp": exp, "nbf": now, "sub": email},
+        settings.SECRET_KEY,
+        algorithm="HS256",
     )
     return encoded_jwt
 

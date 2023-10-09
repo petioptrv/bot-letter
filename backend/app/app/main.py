@@ -13,7 +13,7 @@ from app.rate_limiter import per_user_limiter
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    middleware=[Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())]
+    middleware=[Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())],
 )
 app.state.per_user_limiter = per_user_limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

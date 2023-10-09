@@ -60,7 +60,7 @@ async def test_get_chat_completions(api_provider_mock: APIProviderMocker):
             }
         ],
     }
-    model = OpenAIModels.GPT_3_5_TURBO
+    model = OpenAIModels.GPT_4
     messages = [
         OpenAIChatCompletion(
             role=OpenAIRoles.SYSTEM, content="You are a helpful assistant."
@@ -101,8 +101,12 @@ async def test_get_embedding(api_provider_mock: APIProviderMocker):
     api_provider = APIProvider()
     config = OpenAIConfig(openai_api_key="test-api-key")
     client = OpenAI(api_provider=api_provider, config=config)
-    response = await client.get_embedding(model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text="OpenAI")
-    expected_array = np.array(mock_response["data"][0]["embedding"], dtype=np.float32).tobytes()
+    response = await client.get_embedding(
+        model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text="OpenAI"
+    )
+    expected_array = np.array(
+        mock_response["data"][0]["embedding"], dtype=np.float32
+    ).tobytes()
 
     assert isinstance(response, Embedding)
     assert response.vector == expected_array
@@ -124,7 +128,9 @@ if __name__ == "__main__":
         " infrared, synthetic aperture radar and hyper spectral purposes."
     )
 
-    embedding = asyncio.run(openai.get_embedding(model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text=text))
+    embedding = asyncio.run(
+        openai.get_embedding(model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text=text)
+    )
     print(embedding)
 
     messages = [
@@ -143,5 +149,7 @@ any clarification questions?"""
             ),
         )
     ]
-    completions = asyncio.run(openai.get_chat_completions(model=OpenAIModels.GPT_3_5_TURBO, messages=messages))
+    completions = asyncio.run(
+        openai.get_chat_completions(model=OpenAIModels.GPT_4, messages=messages)
+    )
     print(completions)

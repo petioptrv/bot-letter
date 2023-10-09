@@ -58,10 +58,14 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return user.is_superuser
 
     def check_user_subscription_search_within_limits(self, *, db_object: User):
-        within_limits = not timestamp_within_today(
-            timestamp=db_object.last_subscription_search_timestamp,
-            timezone=settings.TIMEZONE,
-        ) or db_object.subscription_search_count < db_object.max_subscription_search_count
+        within_limits = (
+            not timestamp_within_today(
+                timestamp=db_object.last_subscription_search_timestamp,
+                timezone=settings.TIMEZONE,
+            )
+            or db_object.subscription_search_count
+            < db_object.max_subscription_search_count
+        )
         return within_limits
 
     def increment_user_subscription_search_count(self, db: Session, *, db_object: User):
@@ -71,7 +75,9 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             timestamp=db_object.last_subscription_search_timestamp,
             timezone=settings.TIMEZONE,
         ):
-            update_data["subscription_search_count"] = db_object.subscription_search_count + 1
+            update_data["subscription_search_count"] = (
+                db_object.subscription_search_count + 1
+            )
         else:
             update_data["subscription_search_count"] = 1
 

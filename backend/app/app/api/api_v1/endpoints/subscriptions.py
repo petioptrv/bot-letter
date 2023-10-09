@@ -59,15 +59,20 @@ async def search(
     if len(search_term) == 0:
         raise HTTPException(status_code=400, detail="Search term cannot be empty.")
 
-    if not crud.user.check_user_subscription_search_within_limits(db_object=current_user):
-        raise HTTPException(status_code=400, detail="Subscription search limit reached.")
+    if not crud.user.check_user_subscription_search_within_limits(
+        db_object=current_user
+    ):
+        raise HTTPException(
+            status_code=400, detail="Subscription search limit reached."
+        )
 
     api_provider = APIProvider()
     data_provider = NewsDataIO(api_provider=api_provider, config=news_data_io_config)
     crud.user.increment_user_subscription_search_count(db=db, db_object=current_user)
     try:
-        results = await data_provider.get_last_day_news(
-            topic=search_term, max_page_count=settings.MAX_SUBSCRIPTION_SEARCH_RESULTS_TO_RETURN_TO_USER
+        results = await data_provider.get_latest_news(
+            topic=search_term,
+            max_page_count=settings.MAX_SUBSCRIPTION_SEARCH_RESULTS_TO_RETURN_TO_USER,
         )
     except Exception:
         # todo: decrement search count
@@ -86,8 +91,12 @@ async def create_subscription(
     Create a new subscription.
     """
     if len(current_user.subscriptions) >= settings.MAX_SUBSCRIPTIONS:
-        raise HTTPException(status_code=400, detail="Maximum number of subscriptions reached.")
-    subscription = crud.subscription.create_with_owner(db=db, obj_in=subscription_in, owner_id=current_user.id)
+        raise HTTPException(
+            status_code=400, detail="Maximum number of subscriptions reached."
+        )
+    subscription = crud.subscription.create_with_owner(
+        db=db, obj_in=subscription_in, owner_id=current_user.id
+    )
     return subscription
 
 

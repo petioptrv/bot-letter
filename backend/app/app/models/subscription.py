@@ -11,6 +11,6 @@ if TYPE_CHECKING:
 
 class Subscription(Base):
     id = Column(Integer, primary_key=True, index=True)
-    search_term = Column(String)
+    newsletter_description = Column(String)
     owner_id = Column(Integer, ForeignKey("user.id"))
     owner = relationship("User", back_populates="subscriptions")

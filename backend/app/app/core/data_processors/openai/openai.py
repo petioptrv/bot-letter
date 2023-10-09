@@ -7,13 +7,13 @@ from app.core.api_provider import APIProvider
 from app.core.data_processors.openai.openai_utils import (
     OpenAIConfig,
     OpenAIModels,
-    OpenAIChatCompletion, OpenAIRoles,
+    OpenAIChatCompletion,
+    OpenAIRoles,
 )
 from app.base_types import Embedding
 
 
 class OpenAI:
-    # todo: add interest tuning (i.e. description of what the user is interested in)
     def __init__(self, api_provider: APIProvider, config: OpenAIConfig):
         self._api_provider = api_provider
         self._api_key = config.openai_api_key
@@ -67,3 +67,11 @@ class OpenAI:
             "Authorization": f"Bearer {self._api_key}",
         }
         return headers
+
+
+if __name__ == "__main__":
+    import asyncio
+    import pprint
+
+    openai_ = OpenAI(api_provider=APIProvider(), config=OpenAIConfig())
+    pprint.pprint(asyncio.run(openai_.get_models()), indent=2)

@@ -1,162 +1,138 @@
 import asyncio
-import datetime
 import logging
 import time
-from typing import Optional, List
+from typing import Optional
 
 from dotenv import load_dotenv
 
-from app.base_types import CacheItem, NewsArticleSummary, NewsletterItem
+from app.base_types import NewsArticleSummary, NewsletterItem
 from app.cache.redis.aio_redis_cache import AioRedisCache
 from app.cache.redis.redis_utils import redis_config
 from app.core.api_provider import APIProvider
 from app.core.config import settings
 from app.core.data_processors.openai.openai import OpenAI
 from app.core.data_processors.openai.openai_utils import (
-    OpenAIConfig,
     OpenAIModels,
     OpenAIChatCompletion,
     OpenAIRoles,
-)
-from app.core.data_providers.news_data_io.news_data_io import NewsDataIO
-from app.core.data_providers.news_data_io.news_data_io_utils import (
-    news_data_io_config,
+    openai_config,
 )
 from app.core.newsletter_creator.newsletter_creator_utils import (
     newsletter_creator_config,
 )
 from app.core.newsletter_formatter import NewsletterFormatter
-from app.core.selection_algos.duplicates_remover import DuplicatesRemover
-from app.core.selection_algos.representative_items_algo import RepresentativeItemsAlgo
+from app.core.selection_algos.representative_items_algo import (
+    generate_most_representative_items,
+)
 from app.utils import send_email
 
 load_dotenv()
 
 
-async def generate_newsletter(search_term: str, user_id: int, email: str):
-    # todo: index articles by title and avoid inserting duplicates
+async def generate_newsletter(newsletter_description: str, user_id: int, email: str):
+    # todo: store embedding of the newsletter description
     # todo: detect if any of the articles duplicate with previously sent articles
     # todo: add a search-term emoji to the letter subject
-    # todo: handle cases where the returned articles are more than the max allowed per user
     # todo: deal with the case where the prompt is way too long and no tokens are left for the completion ---
     #       one way to do it is to break up the article into paragraphs and summarize each paragraph separately
     #       and then combine the summaries into one summary.
-    # todo: limit the length of search terms
+    # todo: limit the length of search descriptions to 100 chars
+    api_provider_ = APIProvider()
+    openai = OpenAI(api_provider=api_provider_, config=openai_config)
+    cache = AioRedisCache(config=redis_config)
+
+    await cache.initialize()
 
     newsletter_generation_id = f"{user_id}_{user_id}_{int(time.time())}"
     log_for_newsletter_generation(
         level=logging.INFO,
         generation_id=newsletter_generation_id,
-        message=f"Starting full test for search term {search_term}",
+        message=f"Starting newsletter creation for search description {newsletter_description}",
     )
 
-    prompt = newsletter_creator_config.prompt.format(
+    # 2. For each article
+    #   2.2. Ask ChatGPT if the current article makes sense as part of the newsletter
+    #     2.2.1. If it does not, skip it
+    #   2.3. For each of the previous articles
+    #     2.3.1. Ask ChatGPT if the current one is redundant with the previous one
+    #       2.3.1.1. If it is, skip it
+
+    article_summary_prompt = newsletter_creator_config.summary_prompt.format(
         word_count=newsletter_creator_config.word_count,
-        search_term=search_term,
     )
-    system_message = OpenAIChatCompletion(role=OpenAIRoles.SYSTEM, content=prompt)
-    api_provider_ = APIProvider()
-
-    news_data_io = NewsDataIO(api_provider=api_provider_, config=news_data_io_config)
-    response = await news_data_io.get_last_day_news(topic=search_term)
-
-    log_for_newsletter_generation(
-        level=logging.DEBUG,
-        generation_id=newsletter_generation_id,
-        message=f"Got {len(response.results)} articles from NewsDataIO for search term {search_term}",
+    article_summary_system_message = OpenAIChatCompletion(
+        role=OpenAIRoles.SYSTEM, content=article_summary_prompt
     )
 
-    openai = OpenAI(api_provider=api_provider_, config=OpenAIConfig())
-    cache = AioRedisCache(config=redis_config)
-    await cache.initialize()
-    new_items = []
+    newsletter_description_embedding = await openai.get_embedding(
+        model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text=newsletter_description
+    )
 
-    for article in response.results:
-        if not await cache.check_item_exists(article=article):
-            try:
-                embedding = await openai.get_embedding(
-                    model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text=article.content
-                )
-            except IOError as e:
-                log_for_newsletter_generation(
-                    level=logging.ERROR,
-                    generation_id=newsletter_generation_id,
-                    message=f"Failed to get embedding for article {article}",
-                    exc_info=e,
-                )
-            else:
-                cache_item = CacheItem(article=article, embedding=embedding)
-                await cache.store_item(cache_item=cache_item)
-                new_items.append(cache_item)
-        else:
-            log_for_newsletter_generation(
-                level=logging.INFO,
-                generation_id=newsletter_generation_id,
-                message=f"Article {article.title} already exists in cache for search term {search_term}",
-            )
-            new_items.append(await cache.get_item_from_article(article=article))
+    since_timestamp = time.time() - settings.ARTICLES_FETCH_WINDOW
+    irrelevant_articles_count = 0
+    news_items = await cache.get_items_since(search_term=None, since_timestamp=since_timestamp)
 
-    if len(new_items) > 0:
-        await cache.clear_oldest_items(
-            search_term=search_term, max_items_to_keep=redis_config.cache_items_per_user
+    if len(news_items) > 0:
+        representative_items_generator = generate_most_representative_items(
+            target_vector=newsletter_description_embedding.vector, cache_items=news_items
         )
-
-        cache_items = await cache.get_items(search_term=search_term)
-
-        duplicates_remover = DuplicatesRemover(openai=openai)
-        representer = RepresentativeItemsAlgo(duplicates_remover=duplicates_remover)
-
-        items: List[CacheItem] = await representer.get_k_most_representative_items(
-            new_items=new_items, cache_items=cache_items, k=len(new_items)
-        )
-
-        # todo: extract the algo into the DuplicatesRemover and a new Summarizer classes
         newsletter_items = []
-        while (
-            len(newsletter_items) != settings.MAX_ARTICLES_PER_NEWSLETTER
-            and len(items) != 0
-        ):
-            item = items.pop()
+        async for item in representative_items_generator:
             try:
-                article_summary = await openai.get_chat_completions(
-                    model=OpenAIModels.GPT_3_5_TURBO,
-                    messages=[
-                        system_message,
-                        OpenAIChatCompletion(
-                            role=OpenAIRoles.USER, content=item.article.content
-                        ),
-                    ],
+                if irrelevant_articles_count == settings.MAX_IRRELEVANT_ARTICLES_COUNT:
+                    break
+                article_summary = item.article_summary
+                if not article_summary.is_initialized:
+                    summary_content = await openai.get_chat_completions(
+                        model=OpenAIModels.GPT_3_5_TURBO,
+                        messages=[
+                            article_summary_system_message,
+                            OpenAIChatCompletion(
+                                role=OpenAIRoles.USER, content=item.article.content
+                            ),
+                        ],
+                    )
+                    article_summary.summary_title = item.article.title
+                    article_summary.summary = summary_content.content
+                    await cache.update_item(cache_item=item)
+                relevancy_prompt = newsletter_creator_config.article_relevancy_prompt.format(
+                    newsletter_description=newsletter_description,
+                    current_article_summary=article_summary.summary,
                 )
+                relevancy_completion = OpenAIChatCompletion(
+                    role=OpenAIRoles.USER, content=relevancy_prompt
+                )
+                relevancy_response = await openai.get_chat_completions(
+                    model=OpenAIModels.GPT_4,
+                    messages=[relevancy_completion],
+                )
+                if relevancy_response.content.lower() in ["no", "no."]:
+                    irrelevant_articles_count += 1
+                    continue  # skip article
                 if len(newsletter_items) == 0:
                     newsletter_items.append(
                         NewsletterItem(
                             article=item.article,
-                            summary=NewsArticleSummary(
-                                summary_title=item.article.title,
-                                summary=article_summary.content,
-                            ),
+                            summary=item.article_summary,
                         )
                     )
                 else:
                     include = True
                     for previous_newsletter_item in newsletter_items:
-                        similarity_prompt = OpenAIChatCompletion(
-                            role=OpenAIRoles.USER,
-                            content=(
-                                f"You are a newsletter editor curating articles for a newsletter centered around the"
-                                f" theme {search_term}. Based on the following article summaries, is the information in"
-                                f" the two articles redundant or covering the same event or topic?"
-                                f"\n\nThe first article is:\n\n{previous_newsletter_item.summary.summary}"
-                                f"\n\nThe second article summary is:\n\n{article_summary.content}\n\nOnly reply with"
-                                f" yes or no."
-                            ),
+                        redundancy_prompt = newsletter_creator_config.article_redundancy_prompt.format(
+                            previous_article_summary=previous_newsletter_item.summary.summary,
+                            current_article_summary=article_summary.summary,
                         )
-                        similarity_response = await openai.get_chat_completions(
-                            model=OpenAIModels.GPT_3_5_TURBO,
-                            messages=[similarity_prompt],
+                        redundancy_completion = OpenAIChatCompletion(
+                            role=OpenAIRoles.USER, content=redundancy_prompt
                         )
-                        if similarity_response.content.lower() in ["yes", "yes."]:
+                        redundancy_response = await openai.get_chat_completions(
+                            model=OpenAIModels.GPT_4,
+                            messages=[redundancy_completion],
+                        )
+                        if redundancy_response.content.lower() in ["yes", "yes."]:
                             include = False
+                            irrelevant_articles_count += 1
                             break
                     if include:
                         newsletter_items.append(
@@ -164,17 +140,40 @@ async def generate_newsletter(search_term: str, user_id: int, email: str):
                                 article=item.article,
                                 summary=NewsArticleSummary(
                                     summary_title=item.article.title,
-                                    summary=article_summary.content,
+                                    summary=article_summary.summary,
                                 ),
                             )
                         )
+            except IOError as e:
+                if "Rate limit reached" in e:
+                    await asyncio.sleep(1)
+                else:
+                    log_for_newsletter_generation(
+                        level=logging.ERROR,
+                        generation_id=newsletter_generation_id,
+                        message=f"Failed to parse summary for article {item.article}",
+                        exc_info=e,
+                    )
             except Exception as e:
                 log_for_newsletter_generation(
                     level=logging.ERROR,
                     generation_id=newsletter_generation_id,
-                    message=(f"Failed to parse summary for article {item.article}"),
+                    message=f"Failed to parse summary for article {item.article}",
                     exc_info=e,
                 )
+            if len(newsletter_items) == settings.MAX_ARTICLES_PER_NEWSLETTER:
+                break
+
+        newsletter_subject_prompt = newsletter_creator_config.newsletter_subject_prompt.format(
+            newsletter_content="\n\n".join([item.summary.summary for item in newsletter_items])
+        )
+        subject_completion = OpenAIChatCompletion(
+            role=OpenAIRoles.USER, content=newsletter_subject_prompt
+        )
+        subject_response = await openai.get_chat_completions(
+            model=OpenAIModels.GPT_4, messages=[subject_completion]
+        )
+        newsletter_subject = subject_response.content
 
         newsletter_formatter = NewsletterFormatter()
         html = newsletter_formatter.format_newsletter_html(
@@ -184,16 +183,17 @@ async def generate_newsletter(search_term: str, user_id: int, email: str):
         log_for_newsletter_generation(
             level=logging.INFO,
             generation_id=newsletter_generation_id,
-            message=f"No new articles found for search term {search_term}",
+            message=f"No new articles found for search term {newsletter_description}",
         )
+        newsletter_subject = "No new articles."
         newsletter_formatter = NewsletterFormatter()
         html = newsletter_formatter.format_newsletter_html_no_new_articles(
-            search_term=search_term
+            search_term=newsletter_description
         )
 
     send_email(
         email_to=email,
-        subject_template=f"{search_term} {datetime.datetime.today().strftime('%Y-%m-%d')}",
+        subject_template=newsletter_subject,
         html_template=html,
     )
 
@@ -206,13 +206,22 @@ def log_for_newsletter_generation(
     )
 
 
-def main():
+if __name__ == "__main__":
+    # newsletter_description_ = (
+    #     "I want a newsletter about the space sector industry. I am interested in the"
+    #     " private space sector, but I also want to know what new government"
+    #     " regulations are put in place that will affect the private space industry."
+    #     " Topics that interest me are Space Exploration Sector, Orbital Industry,"
+    #     " Commercial Space Sector, Satellite Industry, etc."
+    #     " I am not interested in scientific discoveries related to space."
+    # )
+    newsletter_description_ = (
+        "I want a newsletter about the conflict between Palestine and Israel."
+    )
     asyncio.run(
         generate_newsletter(
-            search_term='"space industry"', user_id=0, email="petioptrv@icloud.com"
+            newsletter_description=newsletter_description_,
+            user_id=0,
+            email="petioptrv@icloud.com",
         )
     )
-
-
-if __name__ == "__main__":
-    main()

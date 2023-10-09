@@ -12,7 +12,9 @@ class UserBase(Model):
     is_active: Optional[bool] = True
     last_subscription_search_timestamp: Optional[int] = 0
     subscription_search_count: Optional[int] = 0
-    max_subscription_search_count: Optional[int] = settings.DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT
+    max_subscription_search_count: Optional[
+        int
+    ] = settings.DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT
     is_superuser: bool = False
     subscriptions: List[SubscriptionBase] = []
 
