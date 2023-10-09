@@ -26,8 +26,8 @@ services:
         # This public Traefik will only use services with this label
         - traefik.constraint-label=${TRAEFIK_PUBLIC_TAG?Variable not set}
         # admin-auth middleware with HTTP Basic auth
-        # Using the environment variables USERNAME and HASHED_PASSWORD
-        - traefik.http.middlewares.admin-auth.basicauth.users=${USERNAME?Variable not set}:${HASHED_PASSWORD?Variable not set}
+        # Using the environment variables TRAEFIK_USERNAME and HASHED_PASSWORD
+        - traefik.http.middlewares.admin-auth.basicauth.users=${TRAEFIK_USERNAME?Variable not set}:${HASHED_PASSWORD?Variable not set}
         # https-redirect middleware to redirect HTTP to HTTPS
         # It can be re-used by other stacks in other Docker Compose files
         - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
@@ -88,8 +88,8 @@ services:
       - --entrypoints.http.address=:80
       # Create an entrypoint "https" listening on address 443
       - --entrypoints.https.address=:443
-      # Create the certificate resolver "le" for Let's Encrypt, uses the environment variable EMAIL
-      - --certificatesresolvers.le.acme.email=${EMAIL?Variable not set}
+      # Create the certificate resolver "le" for Let's Encrypt, uses the environment variable TRAEFIK_EMAIL
+      - --certificatesresolvers.le.acme.email=${TRAEFIK_EMAIL?Variable not set}
       # Store the Let's Encrypt certificates in the mounted volume
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
       # Use the TLS Challenge for Let's Encrypt
