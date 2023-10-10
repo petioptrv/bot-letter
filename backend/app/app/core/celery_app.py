@@ -18,11 +18,11 @@ celery_app.conf.beat_schedule = {
         "args": (),
     }
 }
-# hour, minute = settings.NEWSLETTER_TIME.split(":")
-# celery_app.conf.beat_schedule = {
-#     "generate-all-newsletters": {
-#         "task": "app.worker.generate_all_newsletters",
-#         "schedule": crontab(hour=hour, minute=minute),
-#         "args": (),
-#     }
-# }
+hour, minute = settings.NEWSLETTER_TIME.split(":")
+celery_app.conf.beat_schedule = {
+    "generate-all-newsletters": {
+        "task": "app.worker.generate_all_newsletters",
+        "schedule": crontab(hour=hour, minute=minute),
+        "args": (),
+    }
+}
