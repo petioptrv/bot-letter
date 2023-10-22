@@ -1,4 +1,4 @@
-<template v-slot:activator="{ on }">
+<template>
   <div>
     <v-navigation-drawer persistent :mini-variant="miniDrawer" v-model="showDrawer" fixed app>
       <v-layout column fill-height>
@@ -84,9 +84,6 @@
       <v-app-bar-title v-text="appName"></v-app-bar-title>
       <v-spacer></v-spacer>
       <v-menu bottom left offset-y>
-        <v-btn v-on="on" icon>
-          <v-icon>more_vert</v-icon>
-        </v-btn>
         <v-list>
           <v-list-item to="/main/profile">
             <v-list-item-content>
@@ -129,12 +126,10 @@ import {
 import { commitSetDashboardShowDrawer, commitSetDashboardMiniDrawer } from '@/store/main/mutations';
 import {
   dispatchCheckCanCreateSubscriptions,
-  dispatchCheckRemainingSubscriptionSearches,
   dispatchGetUserProfile,
   dispatchUserLogOut
 } from '@/store/main/actions';
 import {AdaptedVue} from "@/adaptedVue";
-import {commitClearSubscriptionSearchResults} from "@/store/subscriptions/mutations";
 
 const routeGuardMain = async (to, from, next) => {
   if (to.path === '/main') {
@@ -158,7 +153,6 @@ export default class Main extends AdaptedVue {
 
   public beforeRouteLeave(to: any, from: any, next: any) {
     dispatchCheckCanCreateSubscriptions(this.$store);
-    dispatchCheckRemainingSubscriptionSearches(this.$store);
     dispatchGetUserProfile(this.$store);
     next();
   }

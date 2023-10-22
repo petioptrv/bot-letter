@@ -45,24 +45,24 @@ class AioRedisCache(CacheBase):
         item_name = self._build_item_name(article=cache_item.article)
         await self._conn.hset(name=item_name, mapping=item)
 
-    async def clear_all_items(self, search_term: Optional[str]):
-        await self.clear_oldest_items(search_term=search_term, max_items_to_keep=0)
+    async def clear_all_items(self, newsletter_description: Optional[str]):
+        await self.clear_oldest_items(newsletter_description=newsletter_description, max_items_to_keep=0)
 
     async def clear_oldest_items(
-        self, search_term: Optional[str], max_items_to_keep: int
+        self, newsletter_description: Optional[str], max_items_to_keep: int
     ):
         sorted_keys_items = await self._get_sorted_key_item_tuples(
-            search_term=search_term
+            newsletter_description=newsletter_description
         )
         keys_to_remove = [key for key, _ in sorted_keys_items[max_items_to_keep:]]
         if len(keys_to_remove) != 0:
             await self._conn.delete(*keys_to_remove)
 
     async def clear_items_older_than(
-        self, search_term: Optional[str], latest_timestamp: float
+        self, newsletter_description: Optional[str], latest_timestamp: float
     ):
         sorted_keys_items = await self._get_sorted_key_item_tuples(
-            search_term=search_term
+            newsletter_description=newsletter_description
         )
         keys_to_remove = [
             key
@@ -72,21 +72,21 @@ class AioRedisCache(CacheBase):
         if len(keys_to_remove) != 0:
             await self._conn.delete(*keys_to_remove)
 
-    async def get_items_since(self, search_term: Optional[str], since_timestamp: float) -> [CacheItem]:
-        sorted_items = await self._get_sorted_key_item_tuples(search_term=search_term)
+    async def get_items_since(self, newsletter_description: Optional[str], since_timestamp: float) -> [CacheItem]:
+        sorted_items = await self._get_sorted_key_item_tuples(newsletter_description=newsletter_description)
         items = [item for _, item in sorted_items if item.article.publishing_timestamp >= since_timestamp]
         return items
 
-    async def get_newest_item(self, search_term: Optional[str]) -> Optional[CacheItem]:
-        sorted_items = await self._get_sorted_key_item_tuples(search_term=search_term)
+    async def get_newest_item(self, newsletter_description: Optional[str]) -> Optional[CacheItem]:
+        sorted_items = await self._get_sorted_key_item_tuples(newsletter_description=newsletter_description)
         if len(sorted_items) != 0:
             newest_item = sorted_items[0][1]
         else:
             newest_item = None
         return newest_item
 
-    async def get_items(self, search_term: Optional[str]) -> [CacheItem]:
-        keys = await self._get_item_keys(search_term=search_term)
+    async def get_items(self, newsletter_description: Optional[str]) -> [CacheItem]:
+        keys = await self._get_item_keys(newsletter_description=newsletter_description)
         pipeline = self._conn.pipeline()
         for key in keys:
             await pipeline.hgetall(key)
@@ -115,9 +115,9 @@ class AioRedisCache(CacheBase):
         return item
 
     async def _get_sorted_key_item_tuples(
-        self, search_term: Optional[str]
+        self, newsletter_description: Optional[str]
     ) -> [(str, CacheItem)]:
-        keys = await self._get_item_keys(search_term=search_term)
+        keys = await self._get_item_keys(newsletter_description=newsletter_description)
         if keys:
             pipeline = self._conn.pipeline()
             for key in keys:
@@ -136,8 +136,8 @@ class AioRedisCache(CacheBase):
 
         return sorted_keys_items
 
-    async def _get_item_keys(self, search_term: Optional[str]) -> [str]:
-        item_name_prefix = self._build_item_name_prefix(search_term=search_term)
+    async def _get_item_keys(self, newsletter_description: Optional[str]) -> [str]:
+        item_name_prefix = self._build_item_name_prefix(newsletter_description=newsletter_description)
         item_key_matcher = (
             f"{item_name_prefix}:*" if len(item_name_prefix) != 0 else "*"
         )
@@ -145,7 +145,7 @@ class AioRedisCache(CacheBase):
         return keys
 
     def _build_item_name(self, article: NewsArticle) -> str:
-        item_name_prefix = self._build_item_name_prefix(search_term=article.search_term)
+        item_name_prefix = self._build_item_name_prefix()
         item_name_numeric = "".join(
             [hex(ord(char))[2:].zfill(2) for char in article.url]
         )
@@ -157,8 +157,8 @@ class AioRedisCache(CacheBase):
         return name
 
     @staticmethod
-    def _build_item_name_prefix(search_term: Optional[str]) -> str:
-        item_name_prefix = f"{search_term if search_term is not None else '*'}"
+    def _build_item_name_prefix(newsletter_description: Optional[str] = None) -> str:
+        item_name_prefix = f"{newsletter_description if newsletter_description is not None else '*'}"
         return item_name_prefix
 
     @staticmethod

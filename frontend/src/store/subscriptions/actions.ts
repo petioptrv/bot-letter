@@ -2,38 +2,41 @@ import {ActionContext} from "vuex";
 import {State} from "@/store/state";
 import {SubscriptionsState} from "@/store/subscriptions/state";
 import {api} from "@/api";
-import {commitAddNotification, commitRemoveNotification} from "@/store/main/mutations";
+import {commitAddNotification} from "@/store/main/mutations";
 import {AxiosError} from "axios";
 import {dispatchCheckApiError} from "@/store/main/actions";
 import {getStoreAccessors} from "typesafe-vuex";
-import {ISubscription, ISubscriptionSearch} from "@/interfaces";
-import {commitSetSubscriptionSearchResults} from "@/store/subscriptions/mutations";
-
+import {ISubscription} from "@/interfaces";
 
 type SubscriptionsContext = ActionContext<SubscriptionsState, State>;
 
+interface ErrorResponse {
+  detail: string;
+}
+
 export const actions = {
-    async actionSubscriptionSearch(context: SubscriptionsContext, payload: ISubscriptionSearch) {
-        try {
-            const searchingNotification = { content: 'searching', showProgress: true };
-            commitAddNotification(context, searchingNotification);
-            const response = (await Promise.all([
-                api.getSubscriptionSearch(context.rootState.main.token, payload),
-                await new Promise<void>((resolve, reject) => setTimeout(() => resolve(), 500)),
-            ]))[0];
-            commitRemoveNotification(context, searchingNotification);
-            commitSetSubscriptionSearchResults(context, response.data);
-        } catch (error) {
-            await dispatchCheckApiError(context, error as AxiosError);
-        }
-    },
     async actionSubscriptionCreate(context: SubscriptionsContext, searchTerm: string) {
         try {
             await api.postSubscriptionCreate(context.rootState.main.token, searchTerm);
-            const searchingNotification = { content: 'subscription created', showProgress: false };
-            commitAddNotification(context, searchingNotification);
+            const creationNotification = { content: 'subscription created', showProgress: false };
+            commitAddNotification(context, creationNotification);
         } catch (error) {
-            await dispatchCheckApiError(context, error as AxiosError);
+            const axiosError = error as AxiosError;
+            await dispatchCheckApiError(context, axiosError);
+
+            let errorMessage = 'An error occurred';
+            if (axiosError.response && axiosError.response.data) {
+                const errorData = axiosError.response.data as ErrorResponse;
+                if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                }
+            }
+            const errorNotification = {
+                content: errorMessage,
+                color: 'error',
+                showProgress: false
+            };
+            commitAddNotification(context, errorNotification);
         }
     },
     async actionSubscriptionDelete(context: SubscriptionsContext, subscription: ISubscription) {
@@ -49,6 +52,5 @@ export const actions = {
 
 const {dispatch} = getStoreAccessors<SubscriptionsState, State>('');
 
-export const dispatchSubscriptionSearch = dispatch(actions.actionSubscriptionSearch);
 export const dispatchSubscriptionCreate = dispatch(actions.actionSubscriptionCreate);
 export const dispatchSubscriptionDelete = dispatch(actions.actionSubscriptionDelete);

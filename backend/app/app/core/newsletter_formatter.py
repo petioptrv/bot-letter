@@ -6,29 +6,16 @@ from app.base_types import NewsletterItem, Newsletter, NewsArticle
 
 
 class NewsletterFormatter:
-    def format_newsletter(self, newsletter_items: List[NewsletterItem]) -> Newsletter:
-        if len(newsletter_items) == 0:
-            news_letter_content = (
-                f"No news found for {newsletter_items[0].article.search_term}."
-            )
-        else:
-            first_item = newsletter_items[0]
-            news_letter_content = self._format_article(article=first_item.article)
-            for item in newsletter_items[1:]:
-                news_letter_content += (
-                    f"---\n\n{self._format_article(article=item.article)}"
-                )
-        return Newsletter(content=news_letter_content)
-
     @staticmethod
-    def format_newsletter_html_no_new_articles(search_term: str) -> str:
+    def format_newsletter_html_no_new_articles(newsletter_description: str) -> str:
+        nd = newsletter_description
         mjml = f"""
             <mjml>
               <mj-body background-color="#fff">
               <mj-section>
                   <mj-column>
                     <mj-text font-size="16px" color="#555">
-                        No new articles found in the past 24 hours for the newsletter description "{search_term}".
+                        No new articles found in the past 24 hours for the newsletter description "{nd}".
                     </mj-text>
                   </mj-column>
                 </mj-section>

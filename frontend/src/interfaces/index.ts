@@ -1,29 +1,6 @@
 export interface ISubscription {
     id: number;
-    search_term: string;
-}
-
-export interface ISubscriptionSearch {
-    search_term: string;
-}
-
-export interface ISubscriptionSearchResult {
-    title: string;
-    url: string;
-    img_url: string;
-    search_term: string;
-    publishing_timestamp: number;
-    description: string;
-    content: string;
-}
-
-export interface ISubscriptionSearchResults {
-    total_results_count: number;
-    results: ISubscriptionSearchResult[];
-}
-
-export interface ISubscriptionCreate {
-    search_term: string;
+    newsletter_description: string;
 }
 
 export interface IUserProfile {

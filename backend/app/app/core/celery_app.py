@@ -11,18 +11,16 @@ celery_app.conf.task_routes = {
     "app.worker.generate_newsletter_task": "main-queue",
     "app.worker.generate_all_newsletters": "main-queue",
 }
+hour, minute = settings.NEWSLETTER_TIME.split(":")
 celery_app.conf.beat_schedule = {
     "update-articles-database": {
         "task": "app.worker.update_articles_database_task",
         "schedule": crontab(minute="*/15"),
         "args": (),
-    }
-}
-hour, minute = settings.NEWSLETTER_TIME.split(":")
-celery_app.conf.beat_schedule = {
+    },
     "generate-all-newsletters": {
         "task": "app.worker.generate_all_newsletters",
         "schedule": crontab(hour=hour, minute=minute),
         "args": (),
-    }
+    },
 }

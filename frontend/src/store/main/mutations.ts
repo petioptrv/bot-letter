@@ -20,9 +20,6 @@ export const mutations = {
     setCanCreateSubscriptions(state: MainState, payload: boolean) {
         state.canCreateSubscriptions = payload;
     },
-    setRemainingSubscriptionSearches(state: MainState, payload: number) {
-        state.remainingSubscriptionSearches = payload;
-    },
     setDashboardMiniDrawer(state: MainState, payload: boolean) {
         state.dashboardMiniDrawer = payload;
     },
@@ -46,6 +43,5 @@ export const commitSetLogInError = commit(mutations.setLogInError);
 export const commitSetToken = commit(mutations.setToken);
 export const commitSetUserProfile = commit(mutations.setUserProfile);
 export const commitSetCanCreateSubscriptions = commit(mutations.setCanCreateSubscriptions);
-export const commitSetRemainingSubscriptionSearches = commit(mutations.setRemainingSubscriptionSearches);
 export const commitAddNotification = commit(mutations.addNotification);
 export const commitRemoveNotification = commit(mutations.removeNotification);

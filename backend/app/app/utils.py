@@ -1,3 +1,4 @@
+import inspect
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
@@ -13,10 +14,11 @@ def send_email(
     email_to: str,
     subject_template: str = "",
     html_template: str = "",
-    environment: Dict[str, Any] = {},
+    environment: Optional[Dict[str, Any]] = None,
 ) -> None:
     # todo: make email auth more secure
     assert settings.EMAILS_ENABLED, "no provided configuration for email variables"
+    environment = environment or {}
     message = emails.Message(
         subject=JinjaTemplate(subject_template),
         html=JinjaTemplate(html_template),
@@ -34,7 +36,7 @@ def send_email(
 
 
 def send_newsletter_email(
-    email_to: str, subject: str, content: str, search_term: str
+    email_to: str, subject: str, content: str, newsletter_description: str
 ) -> None:
     with open(settings.EMAIL_TEMPLATES_DIR / "newsletter.html") as f:
         template_str = f.read()
@@ -42,7 +44,7 @@ def send_newsletter_email(
         email_to=email_to,
         subject_template=subject,
         html_template=template_str,
-        environment={"content": content, "search_term": search_term},
+        environment={"content": content, "newsletter_description": newsletter_description},
     )
 
 
@@ -119,3 +121,8 @@ def verify_password_reset_token(token: str) -> Optional[str]:
         return decoded_token["email"]
     except jwt.JWTError:
         return None
+
+
+def get_current_function_name() -> str:
+    """Returns the name of the function that called this one."""
+    return inspect.stack()[1][3]

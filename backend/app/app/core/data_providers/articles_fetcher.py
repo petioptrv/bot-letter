@@ -29,10 +29,10 @@ async def update_articles_database():
         current_timestamp - 2 * 24 * 60 * 60
     )  # keep two days worth of articles
     await cache.clear_items_older_than(
-        search_term=None, latest_timestamp=latest_timestamp
+        newsletter_description=None, latest_timestamp=latest_timestamp
     )
 
-    newest_item = await cache.get_newest_item(search_term=None)
+    newest_item = await cache.get_newest_item(newsletter_description=None)
     if newest_item is None:
         last_timestamp = int(time.time() - 24 * 60 * 60)
     else:

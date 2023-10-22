@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -23,6 +23,19 @@ class CRUDSubscription(CRUDBase[Subscription, SubscriptionCreate, SubscriptionUp
         db.refresh(db_obj)
         return db_obj
 
+    def get_by_owner_and_description(
+        self, db: Session, *, owner_id: int, newsletter_description: str
+    ) -> Optional[Subscription]:
+        sub = (
+            db.query(self.model)
+            .filter(
+                Subscription.owner_id == owner_id,
+                Subscription.newsletter_description == newsletter_description,
+            )
+            .first()
+        )
+        return sub
+
     def get_multi_by_owner(
         self, db: Session, *, owner_id: int, skip: int = 0, limit: int = 100
     ) -> List[Subscription]:
@@ -42,7 +55,6 @@ class CRUDSubscription(CRUDBase[Subscription, SubscriptionCreate, SubscriptionUp
             .filter(
                 Subscription.owner_id == owner_id,
                 Subscription.id == obj_out.id,
-                # Subscription.search_term == obj_out.search_term,
             )
             .first()
         )

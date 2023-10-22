@@ -26,7 +26,7 @@ class NewsArticle(Model):
     title: str
     url: str
     image_url: Optional[str]
-    search_term: Optional[str]
+    newsletter_description: Optional[str]
     publishing_timestamp: int
     description: str
     content: str

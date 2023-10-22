@@ -9,7 +9,6 @@ const defaultState: MainState = {
   logInError: false,
   userProfile: null,
   canCreateSubscriptions: false,
-  remainingSubscriptionSearches: 0,
   dashboardMiniDrawer: false,
   dashboardShowDrawer: true,
   notifications: [],

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Optional
 
 from raven import Client
@@ -12,6 +13,7 @@ from app.crud import crud_user
 from app.db.session import SessionLocal
 
 client_sentry = Client(settings.SENTRY_DSN)
+logging.basicConfig(level=logging.INFO)
 
 
 @celery_app.task(acks_late=True)
@@ -36,9 +38,7 @@ def generate_all_newsletters():
             db.close()
 
 
-@celery_app.task(
-    acks_late=True
-)  # todo: test how many times it retries — may rack up OpenAI API costs
+@celery_app.task(acks_late=True, max_retries=3, retry_backoff=True)
 def generate_newsletter_task(newsletter_description: str, user_id: int, email: str):
     asyncio.run(
         generate_newsletter(

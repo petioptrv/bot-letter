@@ -43,7 +43,7 @@ class NewsDataIO:
                 title=article["title"],
                 url=article["link"],
                 image_url=article["image_url"],
-                search_term=topic,
+                newsletter_description=topic,
                 publishing_timestamp=self._to_utc_timestamp(
                     pub_date_string=article["pubDate"]
                 ),

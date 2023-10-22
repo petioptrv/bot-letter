@@ -46,10 +46,6 @@ export default new AdaptedRouter({
               component: () => import(/* webpackChunkName: "main-dashboard" */ './views/main/Dashboard.vue'),
             },
             {
-              path: 'create-subscription',
-              component: () => import(/* webpackChunkName: "main-subscriptions" */ './views/main/CreateSubscription.vue'),
-            },
-            {
               path: 'profile',
               component: RouterComponent,
               redirect: 'profile/view',

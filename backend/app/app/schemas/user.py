@@ -10,11 +10,6 @@ class UserBase(Model):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
-    last_subscription_search_timestamp: Optional[int] = 0
-    subscription_search_count: Optional[int] = 0
-    max_subscription_search_count: Optional[
-        int
-    ] = settings.DEFAULT_MAX_SUBSCRIPTION_SEARCH_LIMIT
     is_superuser: bool = False
     subscriptions: List[SubscriptionBase] = []
 
@@ -28,8 +23,6 @@ class UserCreate(UserBase):
 # Properties to receive via API on update
 class UserUpdate(UserBase):
     password: Optional[str] = None
-    subscription_search_count: Optional[int] = None
-    last_subscription_search_timestamp: Optional[int] = None
 
 
 class UserInDBBase(UserBase):

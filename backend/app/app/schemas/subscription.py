@@ -4,11 +4,11 @@ from app.base_types import Model
 
 
 class SubscriptionBase(Model):
-    search_term: Optional[str] = None
+    newsletter_description: Optional[str] = None
 
 
 class SubscriptionCreate(SubscriptionBase):
-    search_term: str
+    newsletter_description: str
 
 
 class SubscriptionUpdate(SubscriptionBase):
@@ -17,12 +17,12 @@ class SubscriptionUpdate(SubscriptionBase):
 
 class SubscriptionDelete(SubscriptionBase):
     id: int
-    search_term: str
+    newsletter_description: str
 
 
 class SubscriptionInDB(SubscriptionBase):
     id: int
-    search_term: str
+    newsletter_description: str
     owner_id: int
 
     class Config:

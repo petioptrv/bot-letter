@@ -11,7 +11,6 @@ import {
     commitSetCanCreateSubscriptions,
     commitSetLoggedIn,
     commitSetLogInError,
-    commitSetRemainingSubscriptionSearches,
     commitSetToken,
     commitSetUserProfile,
 } from './mutations';
@@ -31,7 +30,6 @@ export const actions = {
                 commitSetLogInError(context, false);
                 await dispatchGetUserProfile(context);
                 await dispatchCheckCanCreateSubscriptions(context);
-                await dispatchCheckRemainingSubscriptionSearches(context);
                 await dispatchRouteLoggedIn(context);
                 commitAddNotification(context, { content: 'Logged in', color: 'success' });
             } else {
@@ -56,14 +54,6 @@ export const actions = {
         try {
             const canCreateSubscriptions = await api.getCanCreateSubscription(context.state.token);
             commitSetCanCreateSubscriptions(context, canCreateSubscriptions.data);
-        } catch (error) {
-            await dispatchCheckApiError(context, error as AxiosError);
-        }
-    },
-    async actionCheckRemainingSubscriptionSearches(context: MainContext) {
-        try {
-            const remainingSubscriptionSearches = await api.getRemainingSubscriptionSearches(context.state.token);
-            commitSetRemainingSubscriptionSearches(context, remainingSubscriptionSearches.data);
         } catch (error) {
             await dispatchCheckApiError(context, error as AxiosError);
         }
@@ -184,7 +174,6 @@ export const dispatchCheckApiError = dispatch(actions.actionCheckApiError);
 export const dispatchCheckLoggedIn = dispatch(actions.actionCheckLoggedIn);
 export const dispatchGetUserProfile = dispatch(actions.actionGetUserProfile);
 export const dispatchCheckCanCreateSubscriptions = dispatch(actions.actionCheckCanCreateSubscriptions);
-export const dispatchCheckRemainingSubscriptionSearches = dispatch(actions.actionCheckRemainingSubscriptionSearches);
 export const dispatchLogIn = dispatch(actions.actionLogIn);
 export const dispatchLogOut = dispatch(actions.actionLogOut);
 export const dispatchUserLogOut = dispatch(actions.actionUserLogOut);

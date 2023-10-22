@@ -70,13 +70,13 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
 
     since_timestamp = time.time() - settings.ARTICLES_FETCH_WINDOW
     irrelevant_articles_count = 0
-    news_items = await cache.get_items_since(search_term=None, since_timestamp=since_timestamp)
+    news_items = await cache.get_items_since(newsletter_description=None, since_timestamp=since_timestamp)
 
+    newsletter_items = []
     if len(news_items) > 0:
         representative_items_generator = generate_most_representative_items(
             target_vector=newsletter_description_embedding.vector, cache_items=news_items
         )
-        newsletter_items = []
         async for item in representative_items_generator:
             try:
                 if irrelevant_articles_count == settings.MAX_IRRELEVANT_ARTICLES_COUNT:
@@ -164,6 +164,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
             if len(newsletter_items) == settings.MAX_ARTICLES_PER_NEWSLETTER:
                 break
 
+    if len(newsletter_items) != 0:
         newsletter_subject_prompt = newsletter_creator_config.newsletter_subject_prompt.format(
             newsletter_content="\n\n".join([item.summary.summary for item in newsletter_items])
         )
@@ -188,7 +189,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
         newsletter_subject = "No new articles."
         newsletter_formatter = NewsletterFormatter()
         html = newsletter_formatter.format_newsletter_html_no_new_articles(
-            search_term=newsletter_description
+            newsletter_description=newsletter_description
         )
 
     send_email(
