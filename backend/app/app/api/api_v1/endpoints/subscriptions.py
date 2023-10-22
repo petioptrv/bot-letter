@@ -37,14 +37,14 @@ async def create_subscription(
     ):
         raise HTTPException(
             status_code=400,
-            detail=f"Description must be  at most {settings.MAX_NEWSLETTER_DESCRIPTION_LENGTH}."
+            detail=f"Description must be  at most {settings.MAX_NEWSLETTER_DESCRIPTION_LENGTH} characters."
         )
     if (  # the check cannot be part of the pydantic model because it causes circular import issues with `settings`
         len(subscription_in.newsletter_description) < settings.MIN_NEWSLETTER_DESCRIPTION_LENGTH
     ):
         raise HTTPException(
             status_code=400,
-            detail=f"Description must be at least {settings.MIN_NEWSLETTER_DESCRIPTION_LENGTH}."
+            detail=f"Description must be at least {settings.MIN_NEWSLETTER_DESCRIPTION_LENGTH} characters."
         )
     if crud.subscription.get_by_owner_and_description(
         db=db,
