@@ -24,9 +24,14 @@ should be configured to read `.env-development` instead in order to deploy the d
 # Deployment
 
 See [this post](https://github.com/tiangolo/full-stack-fastapi-postgresql/issues/322).
-Follow these instructions, but do not pull the third-party traefik.yml file (docker-compose.yml already has the configs).
-Copy the env vars from stag-deployment-env-vars.sh and set them before following the instructions.
+Follow these instructions, and DO pull the third-party traefik.yml file. There will be two traefik containers (see
+[this comment](https://github.com/tiangolo/full-stack-fastapi-postgresql/issues/116#issuecomment-612941824)).
+Copy the env vars from stag-deployment-env-vars.sh and set them before following the instructions, but be careful because
+DOMAIN is set twice for two different steps.
+
 REMEMBER TO SET THE TRAEFIK PASSWORD IN THE ENV VARS.
+
+Don't forget to edit `frontend/.env`!
 
 ## On Git Pull
 - Stop the docker stack to free up resources for the build process.
