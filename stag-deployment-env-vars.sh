@@ -1,0 +1,20 @@
+# see https://github.com/tiangolo/full-stack-fastapi-postgresql/issues/322
+export BASE_DOMAIN=bot-letter.com
+export BASE_NAME=bot-letter-com
+export ENV_NAME_SHORT=stag
+export ENV_NAME_LONG=staging
+export TRAEFIK_USERNAME=admin
+export TRAEFIK_PASSWORD=
+export TRAEFIK_EMAIL=botletternews@gmail.com
+export USE_HOSTNAME=$ENV_NAME_SHORT.$BASE_DOMAIN
+export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
+export EMAIL=$TRAEFIK_EMAIL
+export DOMAIN=traefik.$ENV_NAME_SHORT.$BASE_DOMAIN
+export USERNAME=$TRAEFIK_USERNAME
+export PASSWORD=$TRAEFIK_PASSWORD
+export HASHED_PASSWORD=$(openssl passwd -apr1 $PASSWORD)
+export TAG=$ENV_NAME_SHORT
+export DOMAIN=$ENV_NAME_SHORT.$BASE_DOMAIN
+export FRONTEND_ENV=$ENV_NAME_LONG
+export TRAEFIK_TAG=$ENV_NAME_SHORT.$BASE_DOMAIN
+export STACK_NAME=$ENV_NAME_SHORT-$BASE_NAME
