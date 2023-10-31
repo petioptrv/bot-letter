@@ -775,6 +775,7 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,vs,python,jetbrains,pycharm
 
 **/.idea/*
+.idea/bot-letter.iml
 
 /.env
 /.env-docker
