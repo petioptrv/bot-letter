@@ -33,6 +33,9 @@ REMEMBER TO SET THE TRAEFIK PASSWORD IN THE ENV VARS.
 
 Don't forget to edit `frontend/.env`!
 
+Rename `docker-compose.override-staging.yml` to `docker-compose.override.yml` to override the `docker-compose.yml`
+for a staging deployment.
+
 ## On Git Pull
 - Stop the docker stack to free up resources for the build process.
 ```bash
