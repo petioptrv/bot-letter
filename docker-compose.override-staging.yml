@@ -1,0 +1,14 @@
+# This file is configured for local development.
+# Rename it to docker-compose.override.yml to use it.
+# Note: .env-development must exist.
+
+version: "3.6"
+
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  cache:
+    ports:
+      - "6379:6379"
