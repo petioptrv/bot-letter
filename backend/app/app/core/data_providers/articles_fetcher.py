@@ -51,7 +51,7 @@ async def update_articles_database():
                 )
             except IOError:
                 logging.getLogger(name=__name__).exception(
-                    msg=f"Failed to get embedding for article {article}"
+                    msg=f"Failed to get embedding for article {article.title}"
                 )
             else:
                 cache_item = CacheItem(article=article, embedding=embedding)
