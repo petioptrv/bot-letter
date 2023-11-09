@@ -35,6 +35,7 @@ PyYAML = "^6.0.1"
 slowapi = "^0.1.8"
 black = "^23.9.1"
 docker-auto-labels = "^0.2.3"
+Pillow = "^10.1.0"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"

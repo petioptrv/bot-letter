@@ -36,7 +36,8 @@
         <div class="body-1">Search term <b>{{ subscription.newsletter_description }}</b></div>
       </v-card-text>
       <v-card-actions>
-        <v-btn @click="deleteSubscription(subscription)" class="ml-auto">Delete</v-btn>
+        <v-btn @click="issueSubscription(subscription)" class="ml-auto">Issue</v-btn> <!-- todo: restrict to once per day -->
+        <v-btn @click="deleteSubscription(subscription)">Delete</v-btn>
       </v-card-actions>
     </v-card>
     <v-card v-if="canCreateSubscription" class="ma-3 pa-3">
@@ -68,7 +69,11 @@ import {Component} from 'vue-property-decorator';
 import {readCanCreateSubscriptions, readUserProfile} from '@/store/main/getters';
 import {ISubscription} from "@/interfaces";
 import {AdaptedVue} from "@/adaptedVue";
-import {dispatchSubscriptionCreate, dispatchSubscriptionDelete} from "@/store/subscriptions/actions";
+import {
+  dispatchSubscriptionCreate,
+  dispatchSubscriptionDelete,
+  dispatchSubscriptionIssue
+} from "@/store/subscriptions/actions";
 import {
   dispatchCheckCanCreateSubscriptions,
   dispatchGetUserProfile
@@ -139,6 +144,10 @@ export default class Dashboard extends AdaptedVue {
     await dispatchSubscriptionDelete(this.$store, subscription);
     await dispatchGetUserProfile(this.$store);
     await dispatchCheckCanCreateSubscriptions(this.$store);
+  }
+
+  public async issueSubscription(subscription: ISubscription) {
+    await dispatchSubscriptionIssue(this.$store, subscription);
   }
 }
 </script>

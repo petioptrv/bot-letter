@@ -33,10 +33,6 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
     # todo: store embedding of the newsletter description
     # todo: detect if any of the articles duplicate with previously sent articles
     # todo: add a search-term emoji to the letter subject
-    # todo: deal with the case where the prompt is way too long and no tokens are left for the completion ---
-    #       one way to do it is to break up the article into paragraphs and summarize each paragraph separately
-    #       and then combine the summaries into one summary.
-    # todo: limit the length of search descriptions to 100 chars
     api_provider_ = APIProvider()
     openai = OpenAI(api_provider=api_provider_, config=openai_config)
     cache = AioRedisCache(config=redis_config)
@@ -47,7 +43,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
     log_for_newsletter_generation(
         level=logging.INFO,
         generation_id=newsletter_generation_id,
-        message=f"Starting newsletter creation for search description {newsletter_description}",
+        message=f"Starting newsletter creation for search description \"{newsletter_description}\"",
     )
 
     # 2. For each article
@@ -84,7 +80,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
                 article_summary = item.article_summary
                 if not article_summary.is_initialized:
                     summary_content = await openai.get_chat_completions(
-                        model=OpenAIModels.GPT_3_5_TURBO,
+                        model=OpenAIModels.GPT_4_TURBO,
                         messages=[
                             article_summary_system_message,
                             OpenAIChatCompletion(
@@ -103,7 +99,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
                     role=OpenAIRoles.USER, content=relevancy_prompt
                 )
                 relevancy_response = await openai.get_chat_completions(
-                    model=OpenAIModels.GPT_4,
+                    model=OpenAIModels.GPT_4_TURBO,
                     messages=[relevancy_completion],
                 )
                 if relevancy_response.content.lower() in ["no", "no."]:
@@ -127,7 +123,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
                             role=OpenAIRoles.USER, content=redundancy_prompt
                         )
                         redundancy_response = await openai.get_chat_completions(
-                            model=OpenAIModels.GPT_4,
+                            model=OpenAIModels.GPT_4_TURBO,
                             messages=[redundancy_completion],
                         )
                         if redundancy_response.content.lower() in ["yes", "yes."]:
@@ -145,7 +141,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
                             )
                         )
             except IOError as e:
-                if "Rate limit reached" in e:
+                if "Rate limit reached" in str(e):
                     await asyncio.sleep(1)
                 else:
                     log_for_newsletter_generation(
@@ -172,13 +168,13 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
             role=OpenAIRoles.USER, content=newsletter_subject_prompt
         )
         subject_response = await openai.get_chat_completions(
-            model=OpenAIModels.GPT_4, messages=[subject_completion]
+            model=OpenAIModels.GPT_4_TURBO, messages=[subject_completion]
         )
         newsletter_subject = subject_response.content
 
         newsletter_formatter = NewsletterFormatter()
-        html = newsletter_formatter.format_newsletter_html(
-            newsletter_items=newsletter_items
+        html = await newsletter_formatter.format_newsletter_html(
+            api_provider=api_provider_, newsletter_items=newsletter_items
         )
     else:
         log_for_newsletter_generation(

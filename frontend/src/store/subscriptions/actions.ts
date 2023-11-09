@@ -47,6 +47,17 @@ export const actions = {
         } catch (error) {
             await dispatchCheckApiError(context, error as AxiosError);
         }
+    },
+    async actionSubscriptionIssue(context: SubscriptionsContext, subscription: ISubscription) {
+        try {
+            console.log(`actionSubscriptionIssue: ${JSON.stringify(subscription)}`);
+            await api.postSubscriptionIssue(context.rootState.main.token, subscription);
+            console.log(`done actionSubscriptionIssue: ${JSON.stringify(subscription)}`);
+            const searchingNotification = { content: 'subscription issued', showProgress: false };
+            commitAddNotification(context, searchingNotification);
+        } catch (error) {
+            await dispatchCheckApiError(context, error as AxiosError);
+        }
     }
 };
 
@@ -54,3 +65,4 @@ const {dispatch} = getStoreAccessors<SubscriptionsState, State>('');
 
 export const dispatchSubscriptionCreate = dispatch(actions.actionSubscriptionCreate);
 export const dispatchSubscriptionDelete = dispatch(actions.actionSubscriptionDelete);
+export const dispatchSubscriptionIssue = dispatch(actions.actionSubscriptionIssue);

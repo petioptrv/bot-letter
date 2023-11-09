@@ -11,6 +11,11 @@ class SubscriptionCreate(SubscriptionBase):
     newsletter_description: str
 
 
+class SubscriptionIssue(SubscriptionBase):
+    id: int
+    newsletter_description: str
+
+
 class SubscriptionUpdate(SubscriptionBase):
     pass
 

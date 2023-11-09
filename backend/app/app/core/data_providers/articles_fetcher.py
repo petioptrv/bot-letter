@@ -5,6 +5,7 @@ from app.base_types import CacheItem
 from app.cache.redis.aio_redis_cache import AioRedisCache
 from app.cache.redis.redis_utils import redis_config
 from app.core.api_provider import APIProvider
+from app.core.config import settings
 from app.core.data_processors.openai.openai import OpenAI
 from app.core.data_processors.openai.openai_utils import openai_config, OpenAIModels
 from app.core.data_providers.news_data_io.news_data_io import NewsDataIO
@@ -12,6 +13,13 @@ from app.core.data_providers.news_data_io.news_data_io_utils import news_data_io
 
 
 async def update_articles_database():
+    if settings.PERFORM_ARTICLES_DATABASE_UPDATES:
+        await _perform_articles_database_update()
+    else:
+        logging.getLogger(name=__name__).info(msg="Articles database updates are disabled")
+
+
+async def _perform_articles_database_update():
     # todo: index articles by title and avoid inserting duplicates
     # todo: consider filtering articles published by several news outlets (i.e. exact same article, but diff urls)
 

@@ -36,6 +36,7 @@ class Settings(Config):
         return v
 
     POSTGRES_SERVER: str
+    POSTGRES_PORT: Optional[str]
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
@@ -50,6 +51,7 @@ class Settings(Config):
             user=values.get("POSTGRES_USER"),
             password=values.get("POSTGRES_PASSWORD"),
             host=values.get("POSTGRES_SERVER"),
+            port=values.get("POSTGRES_PORT"),
             path=f"/{values.get('POSTGRES_DB') or ''}",
         )
 
@@ -91,7 +93,8 @@ class Settings(Config):
     MAX_SUBSCRIPTIONS: int = 1
     MAX_ARTICLES_PER_NEWSLETTER: int = 5
     MAX_IRRELEVANT_ARTICLES_COUNT: int = 5
-    ARTICLES_FETCH_WINDOW: int = 24 * 60 * 60  # * 2  # todo: revert to one day
+    ARTICLES_FETCH_WINDOW: int = 24 * 60 * 60
+    PERFORM_ARTICLES_DATABASE_UPDATES: bool = True
 
     class Config:
         case_sensitive = True

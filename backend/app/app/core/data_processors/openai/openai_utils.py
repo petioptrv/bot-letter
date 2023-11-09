@@ -22,6 +22,7 @@ class OpenAIChatCompletion(Model):
 
 
 class OpenAIModels(str, Enum):
+    GPT_4_TURBO = "gpt-4-1106-preview"
     GPT_4 = "gpt-4"
     GPT_3_5_TURBO = "gpt-3.5-turbo"
     TEXT_EMBEDDING_ADA_002 = "text-embedding-ada-002"

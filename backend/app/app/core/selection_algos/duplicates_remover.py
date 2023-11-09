@@ -37,7 +37,7 @@ class DuplicatesRemover:
                 )
             )
             completion = await self._openai.get_chat_completions(
-                model=OpenAIModels.GPT_4, messages=messages
+                model=OpenAIModels.GPT_4_TURBO, messages=messages
             )
             if int(completion.content) == 1:
                 non_duplicated_items.append(item)

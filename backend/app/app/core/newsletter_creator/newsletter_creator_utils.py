@@ -16,7 +16,7 @@ class NewsletterCreatorConfig(Config):
     )
     article_relevancy_prompt: str = (
         "You are a newsletter editor curating articles for a custom newsletter for a particular customer."
-        " The customer's description of the newsletter they want is the following:"
+        " The newsletter is in english. The customer's description of the newsletter they want is the following:"
         "\n\n{newsletter_description}"
         "\n\nBased on the description, would you include the following article in the newsletter:"
         "\n\n{current_article_summary}\n\nOnly reply with yes or no."

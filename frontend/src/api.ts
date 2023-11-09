@@ -37,6 +37,9 @@ export const api = {
     async deleteSubscription(token: string, subscription: ISubscription) {
         return axios.delete(`${apiUrl}/api/v1/subscriptions/delete`, {data: subscription, ...authHeaders(token)});
     },
+    async postSubscriptionIssue(token: string, subscription: ISubscription) {
+        return axios.post(`${apiUrl}/api/v1/subscriptions/issue`, subscription, authHeaders(token));
+    },
     async getUsers(token: string) {
         return axios.get<IUserProfile[]>(`${apiUrl}/api/v1/users/`, authHeaders(token));
     },
