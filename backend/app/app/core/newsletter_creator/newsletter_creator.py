@@ -43,7 +43,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
     log_for_newsletter_generation(
         level=logging.INFO,
         generation_id=newsletter_generation_id,
-        message=f"Starting newsletter creation for search description \"{newsletter_description}\"",
+        message=f'Starting newsletter creation for search description "{newsletter_description}"',
     )
 
     # 2. For each article
@@ -66,13 +66,27 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
 
     since_timestamp = time.time() - settings.ARTICLES_FETCH_WINDOW
     irrelevant_articles_count = 0
-    news_items = await cache.get_items_since(newsletter_description=None, since_timestamp=since_timestamp)
+    news_items = await cache.get_items_since(
+        newsletter_description=None, since_timestamp=since_timestamp
+    )
+
+    if len(news_items) == 0:
+        new_items_log_level = logging.WARNING
+    else:
+        new_items_log_level = logging.DEBUG
+    log_for_newsletter_generation(
+        level=new_items_log_level,
+        generation_id=newsletter_generation_id,
+        message=f"Retrieved {len(news_items)} new items since {since_timestamp}",
+    )
 
     newsletter_items = []
     if len(news_items) > 0:
         representative_items_generator = generate_most_representative_items(
-            target_vector=newsletter_description_embedding.vector, cache_items=news_items
+            target_vector=newsletter_description_embedding.vector,
+            cache_items=news_items,
         )
+
         async for item in representative_items_generator:
             try:
                 if irrelevant_articles_count == settings.MAX_IRRELEVANT_ARTICLES_COUNT:
@@ -91,9 +105,11 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
                     article_summary.summary_title = item.article.title
                     article_summary.summary = summary_content.content
                     await cache.update_item(cache_item=item)
-                relevancy_prompt = newsletter_creator_config.article_relevancy_prompt.format(
-                    newsletter_description=newsletter_description,
-                    current_article_summary=article_summary.summary,
+                relevancy_prompt = (
+                    newsletter_creator_config.article_relevancy_prompt.format(
+                        newsletter_description=newsletter_description,
+                        current_article_summary=article_summary.summary,
+                    )
                 )
                 relevancy_completion = OpenAIChatCompletion(
                     role=OpenAIRoles.USER, content=relevancy_prompt
@@ -161,8 +177,12 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
                 break
 
     if len(newsletter_items) != 0:
-        newsletter_subject_prompt = newsletter_creator_config.newsletter_subject_prompt.format(
-            newsletter_content="\n\n".join([item.summary.summary for item in newsletter_items])
+        newsletter_subject_prompt = (
+            newsletter_creator_config.newsletter_subject_prompt.format(
+                newsletter_content="\n\n".join(
+                    [item.summary.summary for item in newsletter_items]
+                )
+            )
         )
         subject_completion = OpenAIChatCompletion(
             role=OpenAIRoles.USER, content=newsletter_subject_prompt
