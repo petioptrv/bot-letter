@@ -38,13 +38,13 @@ class NewsletterFormatter:
             <mjml>
               <mj-body background-color="#fff">
         """
-        for item in newsletter_items:
+        for i, item in enumerate(newsletter_items):
             section = f"""
                 <mj-section>
                   <mj-column>
-                    <mj-divider border-color="#555"></mj-divider>
+                    {'<mj-divider border-color="#555" border-width="1px"></mj-divider>' if i != 0 else ''}
                     <mj-text font-size="16px" color="#000">
-                        <h1>{item.article.title}</h1>
+                        <h2>{item.article.title}</h2>
                     </mj-text>
             """
             if item.article.image_url is not None and await self._is_high_res(
@@ -55,7 +55,7 @@ class NewsletterFormatter:
                 self.logger().info(f"Image for article {item.article} is not high res, so is discarded.")
             for paragraph in item.summary.summary.split("\n"):
                 section += f"""
-                    <mj-text font-size="16px" color="#555">
+                    <mj-text font-size="16px" color="#ff">
                         <p>{paragraph}</p>
                     </mj-text>
                 """

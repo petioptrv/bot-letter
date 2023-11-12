@@ -1,3 +1,5 @@
+# APP Design Brief
+
 **Project Name:** Bot-Letter
 
 **Purpose:** To enable users to receive personalized newsletters containing summarized articles based on their interests.
