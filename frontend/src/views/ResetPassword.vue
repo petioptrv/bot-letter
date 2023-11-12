@@ -69,9 +69,8 @@ export default class UserProfileEdit extends AdaptedVue {
       if (this.$route.path != '/recover-password') {
         this.$router.adaptedPush('/recover-password');
       }
-    } else {
-      return token;
     }
+    return token;
   }
 
   public async submit() {
