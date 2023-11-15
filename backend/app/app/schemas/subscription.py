@@ -17,7 +17,7 @@ class SubscriptionIssue(SubscriptionBase):
 
 
 class SubscriptionUpdate(SubscriptionBase):
-    pass
+    sample_available: Optional[bool] = None
 
 
 class SubscriptionDelete(SubscriptionBase):
@@ -29,6 +29,7 @@ class SubscriptionInDB(SubscriptionBase):
     id: int
     newsletter_description: str
     owner_id: int
+    sample_available: bool
 
     class Config:
         orm_mode = True

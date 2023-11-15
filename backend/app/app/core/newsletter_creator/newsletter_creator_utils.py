@@ -27,6 +27,8 @@ class NewsletterCreatorConfig(Config):
         " have to reply with the newsletter subject line. I only want the subject line and nothing else."
         " Here is the content of the newsletter:\n\n{newsletter_content}"
     )
+    max_articles_per_newsletter: int = 5
+    max_irrelevant_articles_count: int = 5
 
 
 newsletter_creator_config = NewsletterCreatorConfig()

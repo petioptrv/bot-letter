@@ -49,6 +49,7 @@ class NewsArticleSummary(Model):
 class NewsletterItem(Model):
     article: NewsArticle
     summary: NewsArticleSummary
+    relevant: bool = False
 
 
 class Newsletter(Model):

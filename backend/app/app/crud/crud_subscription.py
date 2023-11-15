@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Union
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -22,6 +22,19 @@ class CRUDSubscription(CRUDBase[Subscription, SubscriptionCreate, SubscriptionUp
         db.commit()
         db.refresh(db_obj)
         return db_obj
+
+    def update(
+        self,
+        db: Session,
+        *,
+        db_obj: Subscription,
+        obj_in: Union[SubscriptionUpdate, Dict[str, Any]]
+    ) -> Subscription:
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.dict(exclude_unset=True)
+        return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def get_by_owner_and_description(
         self, db: Session, *, owner_id: int, newsletter_description: str

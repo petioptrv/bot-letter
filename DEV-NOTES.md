@@ -13,7 +13,7 @@ should be configured to read `.env-development` instead in order to deploy the d
 - Have to update OpenSSL to 3.1
 - In order to use system OpenSSL instead of anaconda's: https://askubuntu.com/a/1074050
 
-- When making changes to the db, run `alembic revision --autogenerate -m "message"` to generate a new migration
+- When making changes to the db, set `POSTGRES_SERVER=localhost:8001` in `.env` and run `alembic revision --autogenerate -m "message"` to generate a new migration
 
 ## Frontend
 

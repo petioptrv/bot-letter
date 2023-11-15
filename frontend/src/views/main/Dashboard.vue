@@ -36,7 +36,9 @@
         <div class="body-1">Search term <b>{{ subscription.newsletter_description }}</b></div>
       </v-card-text>
       <v-card-actions>
-        <v-btn @click="issueSubscription(subscription)" class="ml-auto">Issue</v-btn> <!-- todo: restrict to once per day -->
+        <v-btn @click="issueSubscription(subscription)" class="ml-auto" :disabled="!canIssueSample(subscription)">
+          Send Sample
+        </v-btn>
         <v-btn @click="deleteSubscription(subscription)">Delete</v-btn>
       </v-card-actions>
     </v-card>
@@ -108,6 +110,10 @@ export default class Dashboard extends AdaptedVue {
     return readCanCreateSubscriptions(this.$store);
   }
 
+  public canIssueSample(subscription: ISubscription): boolean {
+    return subscription.sample_available;
+  }
+
   public async createSubscription() {
     if ((this.$refs.form as any).validate()) {
       if (this.newNewsletterDescription.length < parseInt(process.env.VUE_APP_MIN_NEWSLETTER_DESCRIPTION_LENGTH)) {
@@ -148,6 +154,7 @@ export default class Dashboard extends AdaptedVue {
 
   public async issueSubscription(subscription: ISubscription) {
     await dispatchSubscriptionIssue(this.$store, subscription);
+    await dispatchGetUserProfile(this.$store);
   }
 }
 </script>

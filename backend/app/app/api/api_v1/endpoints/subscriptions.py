@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -82,18 +84,34 @@ async def delete_subscription(
     return subscription
 
 
-@router.post("/issue", response_model=schemas.SubscriptionInDB)
-async def issue_newsletter(
+@router.get("/can-issue-sample", response_model=bool)
+def can_issue_sample(
+    subscription: schemas.SubscriptionIssue,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> bool:
+    """
+    Check if the current user can issue a one-time sample for given subscription.
+    """
+    db_subscription = crud.subscription.get_by_owner_and_description(
+        db=db,
+        owner_id=current_user.id,
+        newsletter_description=subscription.newsletter_description,
+    )
+    can_issue = db_subscription is not None and db_subscription.sample_available
+    logging.getLogger(__name__).debug(f"can_issue_sample: {can_issue}")
+    return can_issue
+
+
+@router.post("/issue-sample", response_model=schemas.SubscriptionInDB)
+async def issue_newsletter_sample(
     subscription: schemas.SubscriptionIssue,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_active_user),
 ):
     """
-    Issue a celery task to create the desired subscription.
+    Start a celery task to issue a sample newsletter for a given subscription.
     """
-    # todo: restrict to once per day
-    if not current_user.is_superuser:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
     db_subscription = crud.subscription.get_by_owner_and_description(
         db=db,
         owner_id=current_user.id,
@@ -104,8 +122,16 @@ async def issue_newsletter(
             status_code=404,
             detail="You do not have a subscription for this newsletter description.",
         )
+    if not current_user.is_superuser and not db_subscription.sample_available:
+        raise HTTPException(
+            status_code=400,
+            detail="You have already issued a one-time sample for this subscription.",
+        )
     celery_app.send_task(
         name="app.worker.generate_newsletter_task",
         args=[subscription.newsletter_description, current_user.id, current_user.email],
     )
+    subscription_in = schemas.SubscriptionUpdate(sample_available=False or current_user.is_superuser)
+    crud.subscription.update(db=db, db_obj=db_subscription, obj_in=subscription_in)
+
     return db_subscription

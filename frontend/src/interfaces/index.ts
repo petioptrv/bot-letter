@@ -1,6 +1,7 @@
 export interface ISubscription {
     id: number;
     newsletter_description: string;
+    sample_available: boolean;
 }
 
 export interface IUserProfile {
