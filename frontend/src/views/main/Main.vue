@@ -79,9 +79,9 @@
         </v-list>
       </v-layout>
     </v-navigation-drawer>
-    <v-app-bar dark color="primary" app>
+    <v-app-bar dark color="white" app style="height: 60px;display: flex;align-items: center;">
       <v-app-bar-nav-icon @click.stop="switchShowDrawer"></v-app-bar-nav-icon>
-      <v-app-bar-title v-text="appName"></v-app-bar-title>
+      <img src="@/assets/logo.png" alt="Logo" style="height: 50px;">
       <v-spacer></v-spacer>
       <v-menu bottom left offset-y>
         <v-list>
@@ -192,3 +192,11 @@ export default class Main extends AdaptedVue {
   }
 }
 </script>
+
+<style scoped>
+.custom-app-bar {
+  height: 200px; /* Adjust this value as needed */
+  //display: flex;
+  //align-items: center; /* This centers the content vertically */
+}
+</style>

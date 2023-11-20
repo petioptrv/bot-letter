@@ -4,8 +4,8 @@
       <v-layout align-center justify-center>
         <v-flex xs12 sm8 md4>
           <v-card class="elevation-12">
-            <v-toolbar dark color="primary">
-              <v-toolbar-title>{{appName}}</v-toolbar-title>
+            <v-toolbar dark color="white" app style="height: 60px;display: flex;align-items: center;">
+              <img src="@/assets/logo.png" alt="Logo" style="height: 50px;">
               <v-spacer></v-spacer>
             </v-toolbar>
             <v-card-text>
