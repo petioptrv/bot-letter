@@ -98,7 +98,7 @@ def can_issue_sample(
         owner_id=current_user.id,
         newsletter_description=subscription.newsletter_description,
     )
-    can_issue = db_subscription is not None and db_subscription.sample_available
+    can_issue = current_user.is_superuser or (db_subscription is not None and db_subscription.sample_available)
     logging.getLogger(__name__).debug(f"can_issue_sample: {can_issue}")
     return can_issue
 

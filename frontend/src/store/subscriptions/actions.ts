@@ -50,9 +50,7 @@ export const actions = {
     },
     async actionSubscriptionIssue(context: SubscriptionsContext, subscription: ISubscription) {
         try {
-            console.log(`actionSubscriptionIssue: ${JSON.stringify(subscription)}`);
             await api.postSubscriptionIssue(context.rootState.main.token, subscription);
-            console.log(`done actionSubscriptionIssue: ${JSON.stringify(subscription)}`);
             const searchingNotification = { content: 'subscription issued', showProgress: false };
             commitAddNotification(context, searchingNotification);
         } catch (error) {

@@ -1,3 +1,5 @@
+from pydantic import validator
+
 from app.base_types import Config
 
 
@@ -24,11 +26,27 @@ class NewsletterCreatorConfig(Config):
     newsletter_subject_prompt: str = (
         "You are a newsletter editor curating articles for a newsletter. Your task is to come up with an email"
         " subject for the latest newsletter email. I will provide you with the content of the newsletter and you"
-        " have to reply with the newsletter subject line. I only want the subject line and nothing else."
-        " Here is the content of the newsletter:\n\n{newsletter_content}"
+        " have to reply with the newsletter subject line. I only want the subject line and nothing else. The subject"
+        " line should not be enclosed in quotes. Here is the content of the newsletter:\n\n{newsletter_content}"
     )
     max_articles_per_newsletter: int = 5
-    max_irrelevant_articles_count: int = 5
+    max_processed_articles_per_newsletter: int = 10
+
+    @validator("max_articles_per_newsletter")
+    def max_articles_per_newsletter_must_be_greater_than_zero(cls, v, values, **kwargs):
+        if v <= 0:
+            raise ValueError("max_articles_per_newsletter must be greater than zero")
+        return v
+
+    @validator("max_processed_articles_per_newsletter")
+    def max_processed_articles_per_newsletter_must_be_greater_than_max_articles_per_newsletter(
+        cls, v, values, **kwargs
+    ):
+        if "max_articles_per_newsletter" in values and v < values["max_articles_per_newsletter"]:
+            raise ValueError(
+                "max_processed_articles_per_newsletter must be greater than or equal to max_articles_per_newsletter"
+            )
+        return v
 
 
 newsletter_creator_config = NewsletterCreatorConfig()

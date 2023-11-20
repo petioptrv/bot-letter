@@ -12,7 +12,7 @@ from app.core.config import settings
 class NewsletterFormatter:
     @property
     def newsletter_logo_path(self) -> str:
-        server_host = settings.SERVER_HOST
+        server_host = settings.IMG_HOST
         link = f"{server_host}/img/icons/newsletter_logo.png"
         return link
 
@@ -53,12 +53,15 @@ class NewsletterFormatter:
         newsletter_items: List[NewsletterItem],
         newsletter_description: str,
     ) -> str:
+        newsletter_items = sorted(
+            newsletter_items, key=lambda el: el.relevant, reverse=True
+        )
         base_mjml = f"""
             <mjml>
               <mj-body background-color="#fff">
               <mj-section>
                   <mj-column>
-                    <mj-image src={self.newsletter_logo_path} width="300px" height="200px" alt="image description" />
+                    <mj-image src="{self.newsletter_logo_path}" width="300px" height="200px" alt="Bot-Newsletter Logo"></mj-image>
                   </mj-column>
               </mj-section>
         """
