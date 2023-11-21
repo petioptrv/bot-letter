@@ -3,3 +3,4 @@
 from app.db.base_class import Base  # noqa
 from app.models.subscription import Subscription  # noqa
 from app.models.user import User  # noqa
+from app.models.newsletter_generation_config import NewsletterGenerationConfig  # noqa

@@ -1,9 +1,12 @@
 from pydantic import validator
 
 from app.base_types import Config
+from app.db.session import SessionLocal
+from app import crud
 
 
 class NewsletterCreatorConfig(Config):
+    version: int = 0
     summary_prompt: str = (
         "You are an editor for a newsletter that summarizes articles in up to {word_count} words."
         " The user will provide you with an article and you will reply with the summary and only"
@@ -61,4 +64,25 @@ class NewsletterCreatorConfig(Config):
         return v
 
 
+def get_newsletter_generation_config_version_from_db() -> int:
+    db = None
+    try:
+        db = SessionLocal()
+        newsletter_generation_config = crud.newsletter_generation_config.get_by_config(
+            db=db, config_in=newsletter_creator_config
+        )
+        if newsletter_generation_config is None:
+            newsletter_generation_config = crud.newsletter_generation_config.create(
+                db=db, obj_in=newsletter_creator_config
+            )
+    finally:
+        db is not None and db.close()
+    return newsletter_generation_config.id
+
+
 newsletter_creator_config = NewsletterCreatorConfig()
+newsletter_creator_config.version = get_newsletter_generation_config_version_from_db()
+
+
+if __name__ == "__main__":
+    print(f"config_version: {newsletter_creator_config.version}")

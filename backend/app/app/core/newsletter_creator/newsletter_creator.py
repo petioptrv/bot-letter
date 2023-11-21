@@ -37,7 +37,10 @@ class Candidates(BaseModel):
 
     @property
     def candidate_titles(self) -> List[str]:
-        return [candidate.article.title for candidate in self.relevant_candidates + self.irrelevant_candidates]
+        return [
+            candidate.article.title
+            for candidate in self.relevant_candidates + self.irrelevant_candidates
+        ]
 
 
 class NewsletterHTML(BaseModel):
@@ -158,7 +161,11 @@ async def build_candidates(
     )
 
     async for item in representative_items_generator:
-        if is_valid_candidate_item(newsletter_generation_id=newsletter_generation_id, item=item, candidates=candidates):
+        if is_valid_candidate_item(
+            newsletter_generation_id=newsletter_generation_id,
+            item=item,
+            candidates=candidates,
+        ):
             await process_candidate_item(
                 openai=openai,
                 cache=cache,
@@ -180,10 +187,16 @@ async def build_candidates(
     return candidates
 
 
-def is_valid_candidate_item(newsletter_generation_id: str, item: CacheItem, candidates: Candidates) -> bool:
+def is_valid_candidate_item(
+    newsletter_generation_id: str, item: CacheItem, candidates: Candidates
+) -> bool:
     valid = True
 
-    length_valid = len(item.article.content) > newsletter_creator_config.summary_max_word_count if valid else False
+    length_valid = (
+        len(item.article.content) > newsletter_creator_config.summary_max_word_count
+        if valid
+        else False
+    )
     if valid and not length_valid:
         log_for_newsletter_generation(
             level=logging.INFO,
@@ -192,7 +205,9 @@ def is_valid_candidate_item(newsletter_generation_id: str, item: CacheItem, cand
         )
         valid = False
 
-    title_already_included = item.article.title in candidates.candidate_titles if valid else False
+    title_already_included = (
+        item.article.title in candidates.candidate_titles if valid else False
+    )
     if valid and title_already_included:
         log_for_newsletter_generation(
             level=logging.INFO,
@@ -305,9 +320,11 @@ async def process_relevant_candidate_item(
                 newsletter_generation_id=newsletter_generation_id,
                 item=item,
             )
-            redundancy_prompt = newsletter_creator_config.article_redundancy_prompt.format(
-                previous_article_summary=previous_article_selection_text,
-                current_article_summary=current_article_selection_text,
+            redundancy_prompt = (
+                newsletter_creator_config.article_redundancy_prompt.format(
+                    previous_article_summary=previous_article_selection_text,
+                    current_article_summary=current_article_selection_text,
+                )
             )
             redundancy_completion = OpenAIChatCompletion(
                 role=OpenAIRoles.USER, content=redundancy_prompt
@@ -339,7 +356,10 @@ async def get_article_selection_text(
     newsletter_generation_id: str,
     item: CacheItem,
 ) -> str:
-    if len(item.article.description) >= newsletter_creator_config.min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary:
+    if (
+        len(item.article.description)
+        >= newsletter_creator_config.min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary
+    ):
         article_selection_text = item.article.description
     else:
         await ensure_article_is_summarized(
@@ -485,17 +505,4 @@ def log_for_newsletter_generation(
 ):
     logging.getLogger(__name__).log(
         level=level, msg=f"ng-{generation_id}: {message}", exc_info=exc_info
-    )
-
-
-if __name__ == "__main__":
-    newsletter_description_ = (
-        "I want a newsletter about the conflict between Palestine and Israel."
-    )
-    asyncio.run(
-        generate_newsletter(
-            newsletter_description=newsletter_description_,
-            user_id=0,
-            email="petioptrv@icloud.com",
-        )
     )

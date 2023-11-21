@@ -16,7 +16,9 @@ async def update_articles_database():
     if settings.PERFORM_ARTICLES_DATABASE_UPDATES:
         await _perform_articles_database_update()
     else:
-        logging.getLogger(name=__name__).info(msg="Articles database updates are disabled")
+        logging.getLogger(name=__name__).info(
+            msg="Articles database updates are disabled"
+        )
 
 
 async def _perform_articles_database_update():
@@ -33,9 +35,7 @@ async def _perform_articles_database_update():
 
     await cache.initialize()
 
-    latest_timestamp = (
-        current_timestamp - 2 * 24 * 60 * 60
-    )  # keep two days worth of articles
+    latest_timestamp = current_timestamp - redis_config.cache_ttl_days * 24 * 60 * 60
     await cache.clear_items_older_than(
         newsletter_description=None, latest_timestamp=latest_timestamp
     )

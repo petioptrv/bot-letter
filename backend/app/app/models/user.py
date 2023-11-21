@@ -4,7 +4,6 @@ from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
-from ..core.config import settings
 
 if TYPE_CHECKING:
     from .subscription import Subscription  # noqa: F401

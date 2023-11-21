@@ -1,5 +1,6 @@
 from .crud_user import user
 from .crud_subscription import subscription
+from .crud_newsletter_generation_config import newsletter_generation_config
 
 # For a new basic set of CRUD operations you could just do
 
