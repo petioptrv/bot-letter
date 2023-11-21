@@ -41,8 +41,8 @@ class CRUDNewsletterGenerationConfig(
                 NewsletterGenerationConfig.summary_prompt == config_in.summary_prompt,
                 NewsletterGenerationConfig.summary_max_word_count
                 == config_in.summary_max_word_count,
-                NewsletterGenerationConfig.min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary
-                == config_in.min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary,
+                NewsletterGenerationConfig.min_description_len_for_evaluation_prompts
+                == config_in.min_description_len_for_evaluation_prompts,
                 NewsletterGenerationConfig.article_redundancy_prompt
                 == config_in.article_redundancy_prompt,
                 NewsletterGenerationConfig.article_relevancy_prompt
@@ -53,6 +53,10 @@ class CRUDNewsletterGenerationConfig(
                 == config_in.max_articles_per_newsletter,
                 NewsletterGenerationConfig.max_processed_articles_per_newsletter
                 == config_in.max_processed_articles_per_newsletter,
+                NewsletterGenerationConfig.text_generation_model
+                == config_in.text_generation_model.value,
+                NewsletterGenerationConfig.decision_model
+                == config_in.decision_model.value,
             )
             .first()
         )

@@ -1,6 +1,7 @@
 from pydantic import validator
 
 from app.base_types import Config
+from app.core.data_processors.openai.openai_utils import OpenAIModels
 from app.db.session import SessionLocal
 from app import crud
 
@@ -13,7 +14,7 @@ class NewsletterCreatorConfig(Config):
         " the summary. Feel free to break the summary into easily digestible paragraphs."
     )
     summary_max_word_count: int = 350
-    min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary: int = 200
+    min_description_len_for_evaluation_prompts: int = 200
     article_redundancy_prompt: str = (
         "You are a newsletter editor curating articles for a newsletter. Based on the following article summaries,"
         " is the information in the two articles redundant or covering the same event or topic?"
@@ -35,6 +36,8 @@ class NewsletterCreatorConfig(Config):
     )
     max_articles_per_newsletter: int = 5
     max_processed_articles_per_newsletter: int = 10
+    text_generation_model: OpenAIModels = OpenAIModels.GPT_4_TURBO
+    decision_model: OpenAIModels = OpenAIModels.GPT_4_TURBO
 
     @validator("min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary")
     def must_be_smaller_than_summary_max_word_count(

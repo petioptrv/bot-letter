@@ -55,23 +55,23 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
 
     await cache.initialize()
 
-    newsletter_generation_id = get_newsletter_generation_id(
+    newsletter_issue_id = get_newsletter_issue_id(
         user_id=user_id, newsletter_description=newsletter_description
     )
     news_items = await get_news_items(
-        cache=cache, newsletter_generation_id=newsletter_generation_id
+        cache=cache, newsletter_issue_id=newsletter_issue_id
     )
     candidates = await build_candidates(
         openai=openai,
         cache=cache,
         newsletter_description=newsletter_description,
-        newsletter_generation_id=newsletter_generation_id,
+        newsletter_issue_id=newsletter_issue_id,
         news_items=news_items,
     )
     newsletter_items = await build_newsletter_items(
         openai=openai,
         cache=cache,
-        newsletter_generation_id=newsletter_generation_id,
+        newsletter_issue_id=newsletter_issue_id,
         candidates=candidates,
     )
 
@@ -85,7 +85,7 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
     else:
         html = generate_html_for_empty_newsletter(
             newsletter_description=newsletter_description,
-            newsletter_generation_id=newsletter_generation_id,
+            newsletter_issue_id=newsletter_issue_id,
         )
 
     send_email(
@@ -95,27 +95,27 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
     )
 
 
-def get_newsletter_generation_id(user_id: int, newsletter_description: str) -> str:
-    newsletter_generation_id = f"{user_id}_{user_id}_{int(time.time())}"
-    log_for_newsletter_generation(
+def get_newsletter_issue_id(user_id: int, newsletter_description: str) -> str:
+    newsletter_issue_id = f"{user_id}_{user_id}_{int(time.time())}"
+    log_for_newsletter_issue(
         level=logging.INFO,
-        generation_id=newsletter_generation_id,
+        issue_id=newsletter_issue_id,
         message=(
             f'Starting newsletter creation for search description "{newsletter_description}"'
             f"\nMax wordcount per article: {newsletter_creator_config.summary_max_word_count}"
         ),
     )
-    return newsletter_generation_id
+    return newsletter_issue_id
 
 
 async def get_news_items(
-    cache: AioRedisCache, newsletter_generation_id: str
+    cache: AioRedisCache, newsletter_issue_id: str
 ) -> List[CacheItem]:
     since_timestamp = time.time() - settings.ARTICLES_FETCH_WINDOW
 
-    log_for_newsletter_generation(
+    log_for_newsletter_issue(
         level=logging.DEBUG,
-        generation_id=newsletter_generation_id,
+        issue_id=newsletter_issue_id,
         message=f"Fetching new items since {since_timestamp}",
     )
 
@@ -127,9 +127,9 @@ async def get_news_items(
         new_items_log_level = logging.WARNING
     else:
         new_items_log_level = logging.DEBUG
-    log_for_newsletter_generation(
+    log_for_newsletter_issue(
         level=new_items_log_level,
-        generation_id=newsletter_generation_id,
+        issue_id=newsletter_issue_id,
         message=f"Retrieved {len(news_items)} new items since {since_timestamp}",
     )
 
@@ -140,12 +140,12 @@ async def build_candidates(
     openai: OpenAI,
     cache: AioRedisCache,
     newsletter_description: str,
-    newsletter_generation_id: str,
+    newsletter_issue_id: str,
     news_items: List[CacheItem],
 ) -> Candidates:
-    log_for_newsletter_generation(
+    log_for_newsletter_issue(
         level=logging.DEBUG,
-        generation_id=newsletter_generation_id,
+        issue_id=newsletter_issue_id,
         message=f"Building candidates from {len(news_items)} articles",
     )
 
@@ -162,7 +162,7 @@ async def build_candidates(
 
     async for item in representative_items_generator:
         if is_valid_candidate_item(
-            newsletter_generation_id=newsletter_generation_id,
+            newsletter_issue_id=newsletter_issue_id,
             item=item,
             candidates=candidates,
         ):
@@ -170,7 +170,7 @@ async def build_candidates(
                 openai=openai,
                 cache=cache,
                 newsletter_description=newsletter_description,
-                newsletter_generation_id=newsletter_generation_id,
+                newsletter_issue_id=newsletter_issue_id,
                 candidates=candidates,
                 item=item,
             )
@@ -188,7 +188,7 @@ async def build_candidates(
 
 
 def is_valid_candidate_item(
-    newsletter_generation_id: str, item: CacheItem, candidates: Candidates
+    newsletter_issue_id: str, item: CacheItem, candidates: Candidates
 ) -> bool:
     valid = True
 
@@ -198,9 +198,9 @@ def is_valid_candidate_item(
         else False
     )
     if valid and not length_valid:
-        log_for_newsletter_generation(
+        log_for_newsletter_issue(
             level=logging.INFO,
-            generation_id=newsletter_generation_id,
+            issue_id=newsletter_issue_id,
             message=f"Article too long:\n\n{item.article.title}\n{item.article.description}",
         )
         valid = False
@@ -209,9 +209,9 @@ def is_valid_candidate_item(
         item.article.title in candidates.candidate_titles if valid else False
     )
     if valid and title_already_included:
-        log_for_newsletter_generation(
+        log_for_newsletter_issue(
             level=logging.INFO,
-            generation_id=newsletter_generation_id,
+            issue_id=newsletter_issue_id,
             message=f"Article already included:\n\n{item.article.title}\n{item.article.description}",
         )
         valid = False
@@ -223,20 +223,20 @@ async def process_candidate_item(
     openai: OpenAI,
     cache: AioRedisCache,
     newsletter_description: str,
-    newsletter_generation_id: str,
+    newsletter_issue_id: str,
     candidates: Candidates,
     item: CacheItem,
 ):
-    log_for_newsletter_generation(
+    log_for_newsletter_issue(
         level=logging.DEBUG,
-        generation_id=newsletter_generation_id,
+        issue_id=newsletter_issue_id,
         message=f"Processing candidate item {item.article.title}.",
     )
     try:
         article_selection_text = await get_article_selection_text(
             openai=openai,
             cache=cache,
-            newsletter_generation_id=newsletter_generation_id,
+            newsletter_issue_id=newsletter_issue_id,
             item=item,
         )
         relevancy_prompt = newsletter_creator_config.article_relevancy_prompt.format(
@@ -251,9 +251,9 @@ async def process_candidate_item(
             messages=[relevancy_completion],
         )
         if relevancy_response.content.lower() in ["no", "no."]:
-            log_for_newsletter_generation(
+            log_for_newsletter_issue(
                 level=logging.INFO,
-                generation_id=newsletter_generation_id,
+                issue_id=newsletter_issue_id,
                 message=(
                     f"\nArticle not relevant:\n\n{item.article.title}\n{item.article.description}"
                 ),
@@ -263,29 +263,29 @@ async def process_candidate_item(
             await process_relevant_candidate_item(
                 openai=openai,
                 cache=cache,
-                newsletter_generation_id=newsletter_generation_id,
+                newsletter_issue_id=newsletter_issue_id,
                 candidates=candidates,
                 item=item,
             )
     except IOError as e:
         if "Rate limit reached" in str(e):
-            log_for_newsletter_generation(
+            log_for_newsletter_issue(
                 level=logging.WARNING,
-                generation_id=newsletter_generation_id,
+                issue_id=newsletter_issue_id,
                 message="Rate limit reached. Waiting 1 second.",
             )
             await asyncio.sleep(1)
         else:
-            log_for_newsletter_generation(
+            log_for_newsletter_issue(
                 level=logging.ERROR,
-                generation_id=newsletter_generation_id,
+                issue_id=newsletter_issue_id,
                 message=f"Failed to parse summary for article {item.article}",
                 exc_info=e,
             )
     except Exception as e:
-        log_for_newsletter_generation(
+        log_for_newsletter_issue(
             level=logging.ERROR,
-            generation_id=newsletter_generation_id,
+            issue_id=newsletter_issue_id,
             message=f"Failed to parse summary for article {item.article}",
             exc_info=e,
         )
@@ -294,13 +294,13 @@ async def process_candidate_item(
 async def process_relevant_candidate_item(
     openai: OpenAI,
     cache: AioRedisCache,
-    newsletter_generation_id: str,
+    newsletter_issue_id: str,
     candidates: Candidates,
     item: CacheItem,
 ):
-    log_for_newsletter_generation(
+    log_for_newsletter_issue(
         level=logging.DEBUG,
-        generation_id=newsletter_generation_id,
+        issue_id=newsletter_issue_id,
         message=f"Processing relevant candidate item {item.article.title}.",
     )
     include = True
@@ -311,13 +311,13 @@ async def process_relevant_candidate_item(
             previous_article_selection_text = await get_article_selection_text(
                 openai=openai,
                 cache=cache,
-                newsletter_generation_id=newsletter_generation_id,
+                newsletter_issue_id=newsletter_issue_id,
                 item=previous_newsletter_item,
             )
             current_article_selection_text = await get_article_selection_text(
                 openai=openai,
                 cache=cache,
-                newsletter_generation_id=newsletter_generation_id,
+                newsletter_issue_id=newsletter_issue_id,
                 item=item,
             )
             redundancy_prompt = (
@@ -335,16 +335,16 @@ async def process_relevant_candidate_item(
             )
             if redundancy_response.content.lower() in ["yes", "yes."]:
                 include = False
-                log_for_newsletter_generation(
+                log_for_newsletter_issue(
                     level=logging.INFO,
-                    generation_id=newsletter_generation_id,
+                    issue_id=newsletter_issue_id,
                     message=f"Article redundant:\n\n{item.article.title}\n{item.article.description}",
                 )
                 break
     if include:
-        log_for_newsletter_generation(
+        log_for_newsletter_issue(
             level=logging.DEBUG,
-            generation_id=newsletter_generation_id,
+            issue_id=newsletter_issue_id,
             message=f"\nArticle relevant:\n\n{item.article.title}\n{item.article.description}",
         )
         candidates.relevant_candidates.append(item)
@@ -353,12 +353,12 @@ async def process_relevant_candidate_item(
 async def get_article_selection_text(
     openai: OpenAI,
     cache: AioRedisCache,
-    newsletter_generation_id: str,
+    newsletter_issue_id: str,
     item: CacheItem,
 ) -> str:
     if (
         len(item.article.description)
-        >= newsletter_creator_config.min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary
+        >= newsletter_creator_config.min_description_len_for_evaluation_prompts
     ):
         article_selection_text = item.article.description
     else:
@@ -366,7 +366,7 @@ async def get_article_selection_text(
             openai=openai,
             cache=cache,
             cache_item=item,
-            newsletter_generation_id=newsletter_generation_id,
+            newsletter_issue_id=newsletter_issue_id,
         )
         article_selection_text = item.article_summary.summary
     return article_selection_text
@@ -375,12 +375,12 @@ async def get_article_selection_text(
 async def build_newsletter_items(
     openai: OpenAI,
     cache: AioRedisCache,
-    newsletter_generation_id: str,
+    newsletter_issue_id: str,
     candidates: Candidates,
 ) -> List[NewsletterItem]:
-    log_for_newsletter_generation(
+    log_for_newsletter_issue(
         level=logging.DEBUG,
-        generation_id=newsletter_generation_id,
+        issue_id=newsletter_issue_id,
         message=(
             f"Building newsletter items from {len(candidates.relevant_candidates)} relevant"
             f" and {len(candidates.irrelevant_candidates)} irrelevant articles"
@@ -397,7 +397,7 @@ async def build_newsletter_items(
             openai=openai,
             cache=cache,
             cache_item=candidate,
-            newsletter_generation_id=newsletter_generation_id,
+            newsletter_issue_id=newsletter_issue_id,
         )
         newsletter_items.append(
             NewsletterItem(
@@ -417,7 +417,7 @@ async def ensure_article_is_summarized(
     openai: OpenAI,
     cache: AioRedisCache,
     cache_item: CacheItem,
-    newsletter_generation_id: str,
+    newsletter_issue_id: str,
 ):
     article_summary = cache_item.article_summary
     if not article_summary.is_initialized:
@@ -440,9 +440,9 @@ async def ensure_article_is_summarized(
         article_summary.summary_title = cache_item.article.title
         article_summary.summary = summary_content.content
         await cache.update_item(cache_item=cache_item)
-        log_for_newsletter_generation(
+        log_for_newsletter_issue(
             level=logging.DEBUG,
-            generation_id=newsletter_generation_id,
+            issue_id=newsletter_issue_id,
             message=f"Summarized article {cache_item.article.title}",
         )
 
@@ -484,11 +484,11 @@ async def generate_html_for_non_empty_newsletter(
 
 
 def generate_html_for_empty_newsletter(
-    newsletter_description: str, newsletter_generation_id: str
+    newsletter_description: str, newsletter_issue_id: str
 ) -> NewsletterHTML:
-    log_for_newsletter_generation(
+    log_for_newsletter_issue(
         level=logging.WARNING,
-        generation_id=newsletter_generation_id,
+        issue_id=newsletter_issue_id,
         message=f"No new articles found for search term {newsletter_description}",
     )
     newsletter_subject = "No new articles."
@@ -500,9 +500,9 @@ def generate_html_for_empty_newsletter(
     return NewsletterHTML(html=html, newsletter_subject=newsletter_subject)
 
 
-def log_for_newsletter_generation(
-    level: int, generation_id: str, message: str, exc_info: Optional[Exception] = None
+def log_for_newsletter_issue(
+    level: int, issue_id: str, message: str, exc_info: Optional[Exception] = None
 ):
     logging.getLogger(__name__).log(
-        level=level, msg=f"ng-{generation_id}: {message}", exc_info=exc_info
+        level=level, msg=f"ni-{issue_id}: {message}", exc_info=exc_info
     )
