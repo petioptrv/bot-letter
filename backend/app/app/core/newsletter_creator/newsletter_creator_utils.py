@@ -9,7 +9,8 @@ class NewsletterCreatorConfig(Config):
         " The user will provide you with an article and you will reply with the summary and only"
         " the summary. Feel free to break the summary into easily digestible paragraphs."
     )
-    word_count: int = 200
+    summary_max_word_count: int = 350
+    min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary: int = 200
     article_redundancy_prompt: str = (
         "You are a newsletter editor curating articles for a newsletter. Based on the following article summaries,"
         " is the information in the two articles redundant or covering the same event or topic?"
@@ -31,6 +32,17 @@ class NewsletterCreatorConfig(Config):
     )
     max_articles_per_newsletter: int = 5
     max_processed_articles_per_newsletter: int = 10
+
+    @validator("min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary")
+    def must_be_smaller_than_summary_max_word_count(
+        cls, v, values, **kwargs
+    ):
+        if v > values["summary_max_word_count"]:
+            raise ValueError(
+                "min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary"
+                " must be smaller than summary_max_word_count"
+            )
+        return v
 
     @validator("max_articles_per_newsletter")
     def max_articles_per_newsletter_must_be_greater_than_zero(cls, v, values, **kwargs):

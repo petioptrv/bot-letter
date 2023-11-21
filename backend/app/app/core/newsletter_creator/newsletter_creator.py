@@ -35,6 +35,10 @@ class Candidates(BaseModel):
     relevant_candidates: List[CacheItem] = []
     irrelevant_candidates: List[CacheItem] = []
 
+    @property
+    def candidate_titles(self) -> List[str]:
+        return [candidate.article.title for candidate in self.relevant_candidates + self.irrelevant_candidates]
+
 
 class NewsletterHTML(BaseModel):
     html: str
@@ -95,7 +99,7 @@ def get_newsletter_generation_id(user_id: int, newsletter_description: str) -> s
         generation_id=newsletter_generation_id,
         message=(
             f'Starting newsletter creation for search description "{newsletter_description}"'
-            f"\nMax wordcount per article: {newsletter_creator_config.word_count}"
+            f"\nMax wordcount per article: {newsletter_creator_config.summary_max_word_count}"
         ),
     )
     return newsletter_generation_id
@@ -154,33 +158,55 @@ async def build_candidates(
     )
 
     async for item in representative_items_generator:
-        await ensure_article_is_summarized(
-            openai=openai,
-            cache=cache,
-            cache_item=item,
-            newsletter_generation_id=newsletter_generation_id,
-        )
-        await process_candidate_item(
-            openai=openai,
-            newsletter_description=newsletter_description,
-            newsletter_generation_id=newsletter_generation_id,
-            candidates=candidates,
-            item=item,
-        )
-        processed_articles += 1
-        if (
-            processed_articles
-            == newsletter_creator_config.max_processed_articles_per_newsletter
-            or len(candidates.relevant_candidates) + len(candidates.irrelevant_candidates)
-            == newsletter_creator_config.max_articles_per_newsletter
-        ):
-            break
+        if is_valid_candidate_item(newsletter_generation_id=newsletter_generation_id, item=item, candidates=candidates):
+            await process_candidate_item(
+                openai=openai,
+                cache=cache,
+                newsletter_description=newsletter_description,
+                newsletter_generation_id=newsletter_generation_id,
+                candidates=candidates,
+                item=item,
+            )
+            processed_articles += 1
+            if (
+                processed_articles
+                == newsletter_creator_config.max_processed_articles_per_newsletter
+                or len(candidates.relevant_candidates)
+                + len(candidates.irrelevant_candidates)
+                == newsletter_creator_config.max_articles_per_newsletter
+            ):
+                break
 
     return candidates
 
 
+def is_valid_candidate_item(newsletter_generation_id: str, item: CacheItem, candidates: Candidates) -> bool:
+    valid = True
+
+    length_valid = len(item.article.content) > newsletter_creator_config.summary_max_word_count if valid else False
+    if valid and not length_valid:
+        log_for_newsletter_generation(
+            level=logging.INFO,
+            generation_id=newsletter_generation_id,
+            message=f"Article too long:\n\n{item.article.title}\n{item.article.description}",
+        )
+        valid = False
+
+    title_already_included = item.article.title in candidates.candidate_titles if valid else False
+    if valid and title_already_included:
+        log_for_newsletter_generation(
+            level=logging.INFO,
+            generation_id=newsletter_generation_id,
+            message=f"Article already included:\n\n{item.article.title}\n{item.article.description}",
+        )
+        valid = False
+
+    return valid
+
+
 async def process_candidate_item(
     openai: OpenAI,
+    cache: AioRedisCache,
     newsletter_description: str,
     newsletter_generation_id: str,
     candidates: Candidates,
@@ -192,9 +218,15 @@ async def process_candidate_item(
         message=f"Processing candidate item {item.article.title}.",
     )
     try:
+        article_selection_text = await get_article_selection_text(
+            openai=openai,
+            cache=cache,
+            newsletter_generation_id=newsletter_generation_id,
+            item=item,
+        )
         relevancy_prompt = newsletter_creator_config.article_relevancy_prompt.format(
             newsletter_description=newsletter_description,
-            current_article_summary=item.article_summary.summary,
+            current_article_summary=article_selection_text,
         )
         relevancy_completion = OpenAIChatCompletion(
             role=OpenAIRoles.USER, content=relevancy_prompt
@@ -215,6 +247,7 @@ async def process_candidate_item(
         else:
             await process_relevant_candidate_item(
                 openai=openai,
+                cache=cache,
                 newsletter_generation_id=newsletter_generation_id,
                 candidates=candidates,
                 item=item,
@@ -245,6 +278,7 @@ async def process_candidate_item(
 
 async def process_relevant_candidate_item(
     openai: OpenAI,
+    cache: AioRedisCache,
     newsletter_generation_id: str,
     candidates: Candidates,
     item: CacheItem,
@@ -254,16 +288,26 @@ async def process_relevant_candidate_item(
         generation_id=newsletter_generation_id,
         message=f"Processing relevant candidate item {item.article.title}.",
     )
-    if len(candidates.relevant_candidates) == 0:
-        candidates.relevant_candidates.append(item)
-    else:
-        include = True
+    include = True
+    if len(candidates.relevant_candidates) != 0:
         for previous_newsletter_item in chain(
             candidates.relevant_candidates, candidates.irrelevant_candidates
         ):
+            previous_article_selection_text = await get_article_selection_text(
+                openai=openai,
+                cache=cache,
+                newsletter_generation_id=newsletter_generation_id,
+                item=previous_newsletter_item,
+            )
+            current_article_selection_text = await get_article_selection_text(
+                openai=openai,
+                cache=cache,
+                newsletter_generation_id=newsletter_generation_id,
+                item=item,
+            )
             redundancy_prompt = newsletter_creator_config.article_redundancy_prompt.format(
-                previous_article_summary=previous_newsletter_item.article_summary.summary,
-                current_article_summary=item.article_summary.summary,
+                previous_article_summary=previous_article_selection_text,
+                current_article_summary=current_article_selection_text,
             )
             redundancy_completion = OpenAIChatCompletion(
                 role=OpenAIRoles.USER, content=redundancy_prompt
@@ -280,13 +324,32 @@ async def process_relevant_candidate_item(
                     message=f"Article redundant:\n\n{item.article.title}\n{item.article.description}",
                 )
                 break
-        if include:
-            log_for_newsletter_generation(
-                level=logging.DEBUG,
-                generation_id=newsletter_generation_id,
-                message=f"\nArticle relevant:\n\n{item.article.title}\n{item.article.description}",
-            )
-            candidates.relevant_candidates.append(item)
+    if include:
+        log_for_newsletter_generation(
+            level=logging.DEBUG,
+            generation_id=newsletter_generation_id,
+            message=f"\nArticle relevant:\n\n{item.article.title}\n{item.article.description}",
+        )
+        candidates.relevant_candidates.append(item)
+
+
+async def get_article_selection_text(
+    openai: OpenAI,
+    cache: AioRedisCache,
+    newsletter_generation_id: str,
+    item: CacheItem,
+) -> str:
+    if len(item.article.description) >= newsletter_creator_config.min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary:
+        article_selection_text = item.article.description
+    else:
+        await ensure_article_is_summarized(
+            openai=openai,
+            cache=cache,
+            cache_item=item,
+            newsletter_generation_id=newsletter_generation_id,
+        )
+        article_selection_text = item.article_summary.summary
+    return article_selection_text
 
 
 async def build_newsletter_items(
@@ -295,6 +358,15 @@ async def build_newsletter_items(
     newsletter_generation_id: str,
     candidates: Candidates,
 ) -> List[NewsletterItem]:
+    log_for_newsletter_generation(
+        level=logging.DEBUG,
+        generation_id=newsletter_generation_id,
+        message=(
+            f"Building newsletter items from {len(candidates.relevant_candidates)} relevant"
+            f" and {len(candidates.irrelevant_candidates)} irrelevant articles"
+        ),
+    )
+
     newsletter_items = []
 
     for candidate in islice(
@@ -330,7 +402,7 @@ async def ensure_article_is_summarized(
     article_summary = cache_item.article_summary
     if not article_summary.is_initialized:
         article_summary_prompt = newsletter_creator_config.summary_prompt.format(
-            word_count=newsletter_creator_config.word_count,
+            word_count=newsletter_creator_config.summary_max_word_count,
         )
         article_summary_system_message = OpenAIChatCompletion(
             role=OpenAIRoles.SYSTEM, content=article_summary_prompt

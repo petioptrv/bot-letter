@@ -44,3 +44,11 @@ sudo docker stack rm prod-bot-letter-com
 ```
 - Copy the contents of `deployment-env-vars.sh` and run it to populate the env.
 - Follow the steps 
+
+# Trouble Shooting
+## Examine Item on Redis
+
+- SSH to server.
+- `sudo su -`
+- `docker exec -it {redis-container} redis-cli`
+- `FT.SEARCH idx:articles2 "@article:{article-search-term}"`
