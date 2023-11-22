@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from datetime import datetime
 from enum import Enum
 from itertools import chain, islice
 from typing import Optional, List
@@ -541,33 +542,36 @@ async def generate_html_for_non_empty_newsletter(
     in_issue: NewsletterIssueCreate,
 ) -> NewsletterHTML:
     none_relevant = all([not item.relevant for item in newsletter_items])
-    newsletter_subject_prompt = (
-        newsletter_creator_config.newsletter_subject_prompt.format(
-            newsletter_content="\n\n".join(
-                [
-                    item.summary.summary
-                    for item in newsletter_items
-                    if item.relevant or none_relevant
-                ]
-            )
-        )
+    # newsletter_subject_prompt = (
+    #     newsletter_creator_config.newsletter_subject_prompt.format(
+    #         newsletter_content="\n\n".join(
+    #             [
+    #                 item.summary.summary
+    #                 for item in newsletter_items
+    #                 if item.relevant or none_relevant
+    #             ]
+    #         )
+    #     )
+    # )
+    # subject_completion = OpenAIChatCompletion(
+    #     role=OpenAIRoles.USER, content=newsletter_subject_prompt
+    # )
+    # subject_response = await openai.get_chat_completions(
+    #     model=OpenAIModels.GPT_4_TURBO, messages=[subject_completion]
+    # )
+    # in_issue.metrics.token_costs.append(
+    #     TokenCostCreate(
+    #         issue_id=newsletter_issue_id,
+    #         article_id="nw-subject",
+    #         action=CreationAction.SUMMARY,
+    #         input_tokens=subject_response.cost.input_tokens,
+    #         output_tokens=subject_response.cost.output_tokens,
+    #     )
+    # )
+    # newsletter_subject = subject_response.content
+    newsletter_subject = (
+        f"\"{newsletter_description}\" - {datetime.utcnow().strftime(settings.NEWSLETTER_ISSUE_DATE_FORMAT)}"
     )
-    subject_completion = OpenAIChatCompletion(
-        role=OpenAIRoles.USER, content=newsletter_subject_prompt
-    )
-    subject_response = await openai.get_chat_completions(
-        model=OpenAIModels.GPT_4_TURBO, messages=[subject_completion]
-    )
-    in_issue.metrics.token_costs.append(
-        TokenCostCreate(
-            issue_id=newsletter_issue_id,
-            article_id="nw-subject",
-            action=CreationAction.SUMMARY,
-            input_tokens=subject_response.cost.input_tokens,
-            output_tokens=subject_response.cost.output_tokens,
-        )
-    )
-    newsletter_subject = subject_response.content
 
     newsletter_formatter = NewsletterFormatter()
     html = await newsletter_formatter.format_newsletter_html(
@@ -587,7 +591,9 @@ def generate_html_for_empty_newsletter(
         issue_id=newsletter_issue_id,
         message=f"No new articles found for search term {newsletter_description}",
     )
-    newsletter_subject = "No new articles."
+    newsletter_subject = (
+        f"\"{newsletter_description}\" - {datetime.utcnow().strftime(settings.NEWSLETTER_ISSUE_DATE_FORMAT)}"
+    )
     newsletter_formatter = NewsletterFormatter()
     html = newsletter_formatter.format_newsletter_html_no_new_articles(
         newsletter_description=newsletter_description

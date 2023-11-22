@@ -90,6 +90,7 @@ class Settings(Config):
     TIMEZONE: str = "America/New_York"
     NEWSLETTER_TIME: str = "09:00"
     ARTICLE_PUBLISHED_DT_FORMAT: str = "%Y-%m-%d %H:%M:%S"
+    NEWSLETTER_ISSUE_DATE_FORMAT: str = "%Y-%m-%d"
     MIN_NEWSLETTER_DESCRIPTION_LENGTH: int = 10
     MAX_NEWSLETTER_DESCRIPTION_LENGTH: int = 100
     MAX_SUBSCRIPTIONS: int = 1

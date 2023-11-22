@@ -75,6 +75,16 @@ class NewsletterFormatter:
                   </mj-column>
                 </mj-section>
                 """
+        else:
+            base_mjml += f"""
+                <mj-section>
+                  <mj-column>
+                    <mj-text font-size="16px" color="#555">
+                        Here are the most relevant articles found in the past 24 hours for the newsletter description "{newsletter_description}".
+                    </mj-text>
+                  </mj-column>
+                </mj-section>
+                """
         irrelevant_message_added = False
         first_article_in_section = True
         divider = '<mj-divider border-color="#555" border-width="1px"></mj-divider>'
@@ -92,12 +102,18 @@ class NewsletterFormatter:
                     """
                 irrelevant_message_added = True
                 first_article_in_section = True
+            publishing_utc_datetime = datetime.utcfromtimestamp(
+                item.article.publishing_timestamp
+            )
             section = f"""
                 <mj-section>
                   <mj-column>
                     {divider if not first_article_in_section else ''}
                     <mj-text font-size="16px" color="#000">
-                        <h2>{item.article.title}</h2>
+                        <h2><a href={item.article.url}>{item.article.title}</a></h2>
+                    </mj-text>
+                    <mj-text font-size="14px" color="#999">
+                        Published {publishing_utc_datetime.strftime(settings.ARTICLE_PUBLISHED_DT_FORMAT)} UTC.<br>
                     </mj-text>
             """
             first_article_in_section = False
@@ -119,19 +135,6 @@ class NewsletterFormatter:
             section += """
                     </mj-text>
                     """
-            publishing_utc_datetime = datetime.utcfromtimestamp(
-                item.article.publishing_timestamp
-            )
-            section += f"""
-                    <mj-text font-size="14px" color="#999">
-                        <p>
-                            Published {publishing_utc_datetime.strftime(settings.ARTICLE_PUBLISHED_DT_FORMAT)} UTC.<br>
-                            <a href={item.article.url}>Read the full article here.</a>
-                        </p>
-                    </mj-text>
-                  </mj-column>
-                </mj-section>
-                """
             base_mjml += section
 
         base_mjml += """
