@@ -1,5 +1,34 @@
 # bot-letter
 
+This is a complete full-stack application ready for deployment.
+
+The application allows users to define custom newsletter descriptions. Each day, at a pre-determined time,
+the backend will generate a newsletter based on the user's preferences and send it to the user's email.
+The articles constituting the newsletter will be summarized for the user's convenience.
+
+## Technologies Used
+
+- Frontend
+  - Vue.js
+- Backend
+  - FastAPI 
+  - Celery
+  - PostgreSQL
+  - Redis
+  - Traefik
+  - Docker
+  - Docker Compose
+  - Docker Stacks
+  - Embeddings (OpenAI)
+  - LLMs (OpenAI)
+
+## Engineering Practices Used
+
+- SOLID principles
+- [12 factor app](https://12factor.net) principles
+- RESTful API
+- MVC Architecture
+
 ## Backend Requirements
 
 * [Docker](https://www.docker.com/).
