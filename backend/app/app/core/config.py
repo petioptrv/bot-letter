@@ -95,6 +95,7 @@ class Settings(Config):
     MAX_SUBSCRIPTIONS: int = 1
     ARTICLES_FETCH_WINDOW: int = 24 * 60 * 60
     PERFORM_ARTICLES_DATABASE_UPDATES: bool = True
+    PERFORM_SCHEDULED_ARTICLES_ISSUING: bool = True
 
     class Config:
         case_sensitive = True
