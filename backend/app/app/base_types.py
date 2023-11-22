@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 
 import numpy as np
@@ -31,6 +32,11 @@ class NewsArticle(Model):
     description: str
     content: str
 
+    @property
+    def article_id(self) -> str:
+        name = str(uuid.uuid3(uuid.NAMESPACE_DNS, self.url))
+        return name
+
 
 class NewsArticleSearchResults(Model):
     total_results_count: int
@@ -59,9 +65,15 @@ class Newsletter(Model):
 class Embedding(Model):
     vector: np.ndarray
     model: str
+    cost: Optional["Cost"] = None
 
     class Config:
         arbitrary_types_allowed = True
+
+
+class Cost(Model):
+    input_tokens: int
+    output_tokens: int
 
 
 class CacheItem(Model):

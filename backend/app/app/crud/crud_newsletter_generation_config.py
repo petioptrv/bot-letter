@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
 from app.models import NewsletterGenerationConfig
-from app.schemas.newsletter_generation_config import (
+from app.schemas import (
     NewsletterGenerationConfigCreate,
     NewsletterGenerationConfigUpdate,
 )

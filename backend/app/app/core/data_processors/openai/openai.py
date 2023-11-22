@@ -10,7 +10,7 @@ from app.core.data_processors.openai.openai_utils import (
     OpenAIChatCompletion,
     OpenAIRoles,
 )
-from app.base_types import Embedding
+from app.base_types import Embedding, Cost
 
 
 class OpenAI:
@@ -44,6 +44,10 @@ class OpenAI:
         completion = OpenAIChatCompletion(
             role=OpenAIRoles(response["choices"][0]["message"]["role"]),
             content=response["choices"][0]["message"]["content"],
+            cost=Cost(
+                input_tokens=response["usage"]["prompt_tokens"],
+                output_tokens=response["usage"]["completion_tokens"],
+            ),
         )
         return completion
 
@@ -59,7 +63,13 @@ class OpenAI:
             url=url, headers=headers, data=json.dumps(data)
         )
         vector = np.array(response["data"][0]["embedding"], dtype=np.float32)
-        embedding = Embedding(vector=vector, model=model)
+        prompt_tokens = response["usage"]["prompt_tokens"]
+        total_tokens = response["usage"]["total_tokens"]
+        cost = Cost(
+            input_tokens=prompt_tokens,
+            output_tokens=total_tokens - prompt_tokens,
+        )
+        embedding = Embedding(vector=vector, model=model, cost=cost)
         return embedding
 
     def _build_auth_headers(self) -> Dict:

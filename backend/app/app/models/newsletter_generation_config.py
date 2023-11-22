@@ -4,6 +4,7 @@ from app.db.base_class import Base
 
 
 class NewsletterGenerationConfig(Base):
+    __tablename__ = "newsletter_generation_config"
     id = Column(Integer, primary_key=True, index=True)
     summary_prompt = Column(String, default="")
     summary_max_word_count = Column(Integer, default=0)

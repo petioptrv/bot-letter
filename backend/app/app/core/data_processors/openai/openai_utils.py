@@ -1,6 +1,7 @@
 from enum import Enum
+from typing import Optional
 
-from app.base_types import Model, Config
+from app.base_types import Model, Config, Cost
 
 
 class OpenAIConfig(Config):
@@ -19,6 +20,7 @@ class OpenAIRoles(str, Enum):
 class OpenAIChatCompletion(Model):
     role: OpenAIRoles
     content: str
+    cost: Optional[Cost] = None
 
 
 class OpenAIModels(str, Enum):

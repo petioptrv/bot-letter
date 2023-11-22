@@ -31,7 +31,12 @@ def generate_all_newsletters():
             for subscription in user.subscriptions:
                 celery_app.send_task(
                     name="app.worker.generate_newsletter_task",
-                    args=[subscription.newsletter_description, user.id, user.email],
+                    args=[
+                        subscription.newsletter_description,
+                        user.id,
+                        subscription.id,
+                        user.email,
+                    ],
                 )
     finally:
         if db is not None:
@@ -39,10 +44,15 @@ def generate_all_newsletters():
 
 
 @celery_app.task(acks_late=True, max_retries=3, retry_backoff=True)
-def generate_newsletter_task(newsletter_description: str, user_id: int, email: str):
+def generate_newsletter_task(
+    newsletter_description: str, user_id: int, subscription_id: int, email: str
+):
     asyncio.run(
         generate_newsletter(
-            newsletter_description=newsletter_description, user_id=user_id, email=email
+            newsletter_description=newsletter_description,
+            user_id=user_id,
+            subscription_id=subscription_id,
+            email=email,
         )
     )
 

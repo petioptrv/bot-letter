@@ -129,7 +129,7 @@ async def issue_newsletter_sample(
         )
     celery_app.send_task(
         name="app.worker.generate_newsletter_task",
-        args=[subscription.newsletter_description, current_user.id, current_user.email],
+        args=[subscription.newsletter_description, current_user.id, db_subscription.id, current_user.email],
     )
     subscription_in = schemas.SubscriptionUpdate(sample_available=False or current_user.is_superuser)
     crud.subscription.update(db=db, db_obj=db_subscription, obj_in=subscription_in)

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from enum import Enum
 from itertools import chain, islice
 from typing import Optional, List
 
@@ -26,9 +27,19 @@ from app.core.newsletter_formatter import NewsletterFormatter
 from app.core.selection_algos.representative_items_algo import (
     generate_most_representative_items,
 )
+from app.db.session import SessionLocal
+from app.schemas import NewsletterIssueCreate, IssueMetricsCreate, TokenCostCreate
 from app.utils import send_email
+from app import crud
 
 load_dotenv()
+
+
+class CreationAction(str, Enum):
+    EMBEDDING = "embedding"
+    RELEVANCY_CHECK = "relevancy_check"
+    REDUNDANCY_CHECK = "redundancy_check"
+    SUMMARY = "summary"
 
 
 class Candidates(BaseModel):
@@ -48,7 +59,11 @@ class NewsletterHTML(BaseModel):
     newsletter_subject: str
 
 
-async def generate_newsletter(newsletter_description: str, user_id: int, email: str):
+async def generate_newsletter(
+    newsletter_description: str, user_id: int, subscription_id: int, email: str
+):
+    newsletter_issue_start_time = time.time()
+
     api_provider_ = APIProvider()
     openai = OpenAI(api_provider=api_provider_, config=openai_config)
     cache = AioRedisCache(config=redis_config)
@@ -56,7 +71,20 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
     await cache.initialize()
 
     newsletter_issue_id = get_newsletter_issue_id(
-        user_id=user_id, newsletter_description=newsletter_description
+        user_id=user_id,
+        subscription_id=subscription_id,
+        newsletter_description=newsletter_description,
+    )
+    in_metrics = IssueMetricsCreate(
+        issue_id=newsletter_issue_id,
+        newsletter_generation_config_id=newsletter_creator_config.version,
+        time_to_generate=-1,
+    )
+    in_issue = NewsletterIssueCreate(
+        issue_id=newsletter_issue_id,
+        subscription_id=subscription_id,
+        timestamp=int(newsletter_issue_start_time),
+        metrics=in_metrics,
     )
     news_items = await get_news_items(
         cache=cache, newsletter_issue_id=newsletter_issue_id
@@ -67,12 +95,14 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
         newsletter_description=newsletter_description,
         newsletter_issue_id=newsletter_issue_id,
         news_items=news_items,
+        in_issue=in_issue,
     )
     newsletter_items = await build_newsletter_items(
         openai=openai,
         cache=cache,
         newsletter_issue_id=newsletter_issue_id,
         candidates=candidates,
+        in_issue=in_issue,
     )
 
     if len(newsletter_items) != 0:
@@ -80,7 +110,9 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
             api_provider_=api_provider_,
             openai=openai,
             newsletter_items=newsletter_items,
+            newsletter_issue_id=newsletter_issue_id,
             newsletter_description=newsletter_description,
+            in_issue=in_issue,
         )
     else:
         html = generate_html_for_empty_newsletter(
@@ -93,10 +125,14 @@ async def generate_newsletter(newsletter_description: str, user_id: int, email: 
         subject_template=html.newsletter_subject,
         html_template=html.html,
     )
+    in_metrics.time_to_generate = int(time.time() - newsletter_issue_start_time)
+    log_issue_to_db(in_issue=in_issue)
 
 
-def get_newsletter_issue_id(user_id: int, newsletter_description: str) -> str:
-    newsletter_issue_id = f"{user_id}_{user_id}_{int(time.time())}"
+def get_newsletter_issue_id(
+    user_id: int, subscription_id: int, newsletter_description: str
+) -> str:
+    newsletter_issue_id = f"{user_id}-{subscription_id}-{int(time.time())}"
     log_for_newsletter_issue(
         level=logging.INFO,
         issue_id=newsletter_issue_id,
@@ -142,6 +178,7 @@ async def build_candidates(
     newsletter_description: str,
     newsletter_issue_id: str,
     news_items: List[CacheItem],
+    in_issue: NewsletterIssueCreate,
 ) -> Candidates:
     log_for_newsletter_issue(
         level=logging.DEBUG,
@@ -152,7 +189,15 @@ async def build_candidates(
     newsletter_description_embedding = await openai.get_embedding(
         model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text=newsletter_description
     )
-
+    in_issue.metrics.token_costs.append(
+        TokenCostCreate(
+            issue_id=newsletter_issue_id,
+            article_id="nw-description",
+            action=CreationAction.EMBEDDING,
+            input_tokens=newsletter_description_embedding.cost.input_tokens,
+            output_tokens=newsletter_description_embedding.cost.output_tokens,
+        )
+    )
     processed_articles = 0
     candidates = Candidates()
     representative_items_generator = generate_most_representative_items(
@@ -173,6 +218,7 @@ async def build_candidates(
                 newsletter_issue_id=newsletter_issue_id,
                 candidates=candidates,
                 item=item,
+                in_issue=in_issue,
             )
             processed_articles += 1
             if (
@@ -226,6 +272,7 @@ async def process_candidate_item(
     newsletter_issue_id: str,
     candidates: Candidates,
     item: CacheItem,
+    in_issue: NewsletterIssueCreate,
 ):
     log_for_newsletter_issue(
         level=logging.DEBUG,
@@ -238,6 +285,7 @@ async def process_candidate_item(
             cache=cache,
             newsletter_issue_id=newsletter_issue_id,
             item=item,
+            in_issue=in_issue,
         )
         relevancy_prompt = newsletter_creator_config.article_relevancy_prompt.format(
             newsletter_description=newsletter_description,
@@ -250,6 +298,16 @@ async def process_candidate_item(
             model=OpenAIModels.GPT_4_TURBO,
             messages=[relevancy_completion],
         )
+        in_issue.metrics.token_costs.append(
+            TokenCostCreate(
+                issue_id=newsletter_issue_id,
+                article_id=item.article.article_id,
+                action=CreationAction.RELEVANCY_CHECK,
+                input_tokens=relevancy_response.cost.input_tokens,
+                output_tokens=relevancy_response.cost.output_tokens,
+            )
+        )
+
         if relevancy_response.content.lower() in ["no", "no."]:
             log_for_newsletter_issue(
                 level=logging.INFO,
@@ -266,6 +324,7 @@ async def process_candidate_item(
                 newsletter_issue_id=newsletter_issue_id,
                 candidates=candidates,
                 item=item,
+                in_issue=in_issue,
             )
     except IOError as e:
         if "Rate limit reached" in str(e):
@@ -297,6 +356,7 @@ async def process_relevant_candidate_item(
     newsletter_issue_id: str,
     candidates: Candidates,
     item: CacheItem,
+    in_issue: NewsletterIssueCreate,
 ):
     log_for_newsletter_issue(
         level=logging.DEBUG,
@@ -313,12 +373,14 @@ async def process_relevant_candidate_item(
                 cache=cache,
                 newsletter_issue_id=newsletter_issue_id,
                 item=previous_newsletter_item,
+                in_issue=in_issue,
             )
             current_article_selection_text = await get_article_selection_text(
                 openai=openai,
                 cache=cache,
                 newsletter_issue_id=newsletter_issue_id,
                 item=item,
+                in_issue=in_issue,
             )
             redundancy_prompt = (
                 newsletter_creator_config.article_redundancy_prompt.format(
@@ -332,6 +394,15 @@ async def process_relevant_candidate_item(
             redundancy_response = await openai.get_chat_completions(
                 model=OpenAIModels.GPT_4_TURBO,
                 messages=[redundancy_completion],
+            )
+            in_issue.metrics.token_costs.append(
+                TokenCostCreate(
+                    issue_id=newsletter_issue_id,
+                    article_id=item.article.article_id,
+                    action=CreationAction.REDUNDANCY_CHECK,
+                    input_tokens=redundancy_response.cost.input_tokens,
+                    output_tokens=redundancy_response.cost.output_tokens,
+                )
             )
             if redundancy_response.content.lower() in ["yes", "yes."]:
                 include = False
@@ -355,6 +426,7 @@ async def get_article_selection_text(
     cache: AioRedisCache,
     newsletter_issue_id: str,
     item: CacheItem,
+    in_issue: NewsletterIssueCreate,
 ) -> str:
     if (
         len(item.article.description)
@@ -367,6 +439,7 @@ async def get_article_selection_text(
             cache=cache,
             cache_item=item,
             newsletter_issue_id=newsletter_issue_id,
+            in_issue=in_issue,
         )
         article_selection_text = item.article_summary.summary
     return article_selection_text
@@ -377,6 +450,7 @@ async def build_newsletter_items(
     cache: AioRedisCache,
     newsletter_issue_id: str,
     candidates: Candidates,
+    in_issue: NewsletterIssueCreate,
 ) -> List[NewsletterItem]:
     log_for_newsletter_issue(
         level=logging.DEBUG,
@@ -398,6 +472,7 @@ async def build_newsletter_items(
             cache=cache,
             cache_item=candidate,
             newsletter_issue_id=newsletter_issue_id,
+            in_issue=in_issue,
         )
         newsletter_items.append(
             NewsletterItem(
@@ -418,6 +493,7 @@ async def ensure_article_is_summarized(
     cache: AioRedisCache,
     cache_item: CacheItem,
     newsletter_issue_id: str,
+    in_issue: NewsletterIssueCreate,
 ):
     article_summary = cache_item.article_summary
     if not article_summary.is_initialized:
@@ -437,6 +513,15 @@ async def ensure_article_is_summarized(
                 ),
             ],
         )
+        in_issue.metrics.token_costs.append(
+            TokenCostCreate(
+                issue_id=newsletter_issue_id,
+                article_id=cache_item.article.article_id,
+                action=CreationAction.SUMMARY,
+                input_tokens=summary_content.cost.input_tokens,
+                output_tokens=summary_content.cost.output_tokens,
+            )
+        )
         article_summary.summary_title = cache_item.article.title
         article_summary.summary = summary_content.content
         await cache.update_item(cache_item=cache_item)
@@ -451,7 +536,9 @@ async def generate_html_for_non_empty_newsletter(
     api_provider_: APIProvider,
     openai: OpenAI,
     newsletter_items: List[NewsletterItem],
+    newsletter_issue_id: str,
     newsletter_description: str,
+    in_issue: NewsletterIssueCreate,
 ) -> NewsletterHTML:
     none_relevant = all([not item.relevant for item in newsletter_items])
     newsletter_subject_prompt = (
@@ -470,6 +557,15 @@ async def generate_html_for_non_empty_newsletter(
     )
     subject_response = await openai.get_chat_completions(
         model=OpenAIModels.GPT_4_TURBO, messages=[subject_completion]
+    )
+    in_issue.metrics.token_costs.append(
+        TokenCostCreate(
+            issue_id=newsletter_issue_id,
+            article_id="nw-subject",
+            action=CreationAction.SUMMARY,
+            input_tokens=subject_response.cost.input_tokens,
+            output_tokens=subject_response.cost.output_tokens,
+        )
     )
     newsletter_subject = subject_response.content
 
@@ -498,6 +594,17 @@ def generate_html_for_empty_newsletter(
     )
 
     return NewsletterHTML(html=html, newsletter_subject=newsletter_subject)
+
+
+def log_issue_to_db(in_issue: NewsletterIssueCreate):
+    db_session = SessionLocal()
+
+    crud.newsletter_issue.create_issue(db_session=db_session, obj_in=in_issue)
+    for in_article in in_issue.articles:
+        crud.issue_article.create_issue_article(db_session=db_session, obj_in=in_article)
+    crud.issue_metrics.create_issue_metrics(db_session=db_session, obj_in=in_issue.metrics)
+    for in_cost in in_issue.metrics.token_costs:
+        crud.token_cost.create_token_cost(db_session=db_session, obj_in=in_cost)
 
 
 def log_for_newsletter_issue(

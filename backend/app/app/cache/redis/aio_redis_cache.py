@@ -32,17 +32,17 @@ class AioRedisCache(CacheBase):
         )
 
     async def check_item_exists(self, article: NewsArticle) -> bool:
-        item_name = self._build_item_name(article=article)
+        item_name = article.article_id
         return await self._conn.exists(item_name)
 
     async def store_item(self, cache_item: CacheItem):
-        item_name = self._build_item_name(article=cache_item.article)
+        item_name = cache_item.article.article_id
         if not await self._conn.exists(item_name):
             await self.update_item(cache_item=cache_item)
 
     async def update_item(self, cache_item: CacheItem):
         item = self._format_for_cache(cache_item=cache_item)
-        item_name = self._build_item_name(article=cache_item.article)
+        item_name = cache_item.article.article_id
         await self._conn.hset(name=item_name, mapping=item)
 
     async def clear_all_items(self, newsletter_description: Optional[str]):
@@ -85,8 +85,8 @@ class AioRedisCache(CacheBase):
             newest_item = None
         return newest_item
 
-    async def get_items(self, newsletter_description: Optional[str]) -> [CacheItem]:
-        keys = await self._get_item_keys(newsletter_description=newsletter_description)
+    async def get_items(self) -> [CacheItem]:
+        keys = await self._get_item_keys()
         pipeline = self._conn.pipeline()
         for key in keys:
             await pipeline.hgetall(key)
@@ -95,7 +95,7 @@ class AioRedisCache(CacheBase):
         return cache_items
 
     async def get_item_from_article(self, article: NewsArticle) -> Optional[CacheItem]:
-        item_name = self._build_item_name(article=article)
+        item_name = article.article_id
         item = await self._conn.hgetall(item_name)
         if item:
             cache_item = self._format_from_cache(item)
@@ -117,7 +117,7 @@ class AioRedisCache(CacheBase):
     async def _get_sorted_key_item_tuples(
         self, newsletter_description: Optional[str]
     ) -> [(str, CacheItem)]:
-        keys = await self._get_item_keys(newsletter_description=newsletter_description)
+        keys = await self._get_item_keys()
         if keys:
             pipeline = self._conn.pipeline()
             for key in keys:
@@ -136,30 +136,10 @@ class AioRedisCache(CacheBase):
 
         return sorted_keys_items
 
-    async def _get_item_keys(self, newsletter_description: Optional[str]) -> [str]:
-        item_name_prefix = self._build_item_name_prefix(newsletter_description=newsletter_description)
-        item_key_matcher = (
-            f"{item_name_prefix}:*" if len(item_name_prefix) != 0 else "*"
-        )
+    async def _get_item_keys(self) -> [str]:
+        item_key_matcher = "*:*"
         keys = await self._conn.keys(item_key_matcher)
         return keys
-
-    def _build_item_name(self, article: NewsArticle) -> str:
-        item_name_prefix = self._build_item_name_prefix()
-        item_name_numeric = "".join(
-            [hex(ord(char))[2:].zfill(2) for char in article.url]
-        )
-        name = (
-            f"{item_name_prefix}:{item_name_numeric}"
-            if len(item_name_numeric) != 0
-            else f"{item_name_prefix}"
-        )
-        return name
-
-    @staticmethod
-    def _build_item_name_prefix(newsletter_description: Optional[str] = None) -> str:
-        item_name_prefix = f"{newsletter_description if newsletter_description is not None else '*'}"
-        return item_name_prefix
 
     @staticmethod
     def _format_from_cache(item: Dict) -> CacheItem:

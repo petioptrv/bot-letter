@@ -1,7 +1,6 @@
 from typing import Optional, List
 
 from app.base_types import EmailStr, Model
-from app.core.config import settings
 from app.schemas.subscription import SubscriptionBase, SubscriptionInDB
 
 
