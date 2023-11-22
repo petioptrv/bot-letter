@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from app.base_types import Model
 
 
-class TokenCostBase(BaseModel):
+class TokenCostBase(Model):
     pass
 
 

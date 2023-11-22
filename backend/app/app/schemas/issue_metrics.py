@@ -1,11 +1,10 @@
 from typing import List
 
-from pydantic import BaseModel
+from app.base_types import Model
+from app.schemas.token_cost import TokenCostCreate
 
-from app.schemas import TokenCostCreate
 
-
-class IssueMetricsBase(BaseModel):
+class IssueMetricsBase(Model):
     pass
 
 

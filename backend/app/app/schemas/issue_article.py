@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from app.base_types import Model
 
 
-class IssueArticleBase(BaseModel):
+class IssueArticleBase(Model):
     issue_id: str
     article_id: str
 

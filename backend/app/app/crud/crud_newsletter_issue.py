@@ -1,4 +1,5 @@
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
 from app.models.newsletter_issue import NewsletterIssue
@@ -13,7 +14,7 @@ class CRUDNewsletterIssue(
     ]
 ):
     def create_issue(
-        self, db, *, obj_in: NewsletterIssueCreate
+        self, db: Session, *, obj_in: NewsletterIssueCreate
     ) -> NewsletterIssue:
         obj_in_data = jsonable_encoder(obj_in)
         obj_in_data.pop("articles", None)

@@ -599,7 +599,7 @@ def generate_html_for_empty_newsletter(
 def log_issue_to_db(in_issue: NewsletterIssueCreate):
     db_session = SessionLocal()
 
-    crud.newsletter_issue.create_issue(db_session=db_session, obj_in=in_issue)
+    crud.newsletter_issue.create_issue(db=db_session, obj_in=in_issue)
     for in_article in in_issue.articles:
         crud.issue_article.create_issue_article(db_session=db_session, obj_in=in_article)
     crud.issue_metrics.create_issue_metrics(db_session=db_session, obj_in=in_issue.metrics)

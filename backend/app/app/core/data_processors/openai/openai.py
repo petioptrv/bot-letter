@@ -36,7 +36,7 @@ class OpenAI:
         headers["Content-Type"] = "application/json"
         data = {
             "model": model.value,
-            "messages": [message.dict() for message in messages],
+            "messages": [message.get_dict_for_api_request() for message in messages],
         }
         response = await self._api_provider.post(
             url=url, headers=headers, data=json.dumps(data)

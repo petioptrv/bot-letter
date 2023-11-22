@@ -2,7 +2,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from app.schemas import IssueArticleCreate, IssueMetricsCreate
+from app.schemas.issue_article import IssueArticleCreate
+from app.schemas.issue_metrics import IssueMetricsCreate
 
 
 class NewsletterIssueBase(BaseModel):
@@ -13,8 +14,8 @@ class NewsletterIssueCreate(NewsletterIssueBase):
     issue_id: str
     subscription_id: int
     timestamp: int
-    articles: List[IssueArticleCreate]
     metrics: IssueMetricsCreate
+    articles: List[IssueArticleCreate] = []
 
 
 class NewsletterIssueUpdate(NewsletterIssueBase):

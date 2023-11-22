@@ -22,6 +22,12 @@ class OpenAIChatCompletion(Model):
     content: str
     cost: Optional[Cost] = None
 
+    def get_dict_for_api_request(self):
+        return {
+            "role": self.role.value,
+            "content": self.content,
+        }
+
 
 class OpenAIModels(str, Enum):
     GPT_4_TURBO = "gpt-4-1106-preview"

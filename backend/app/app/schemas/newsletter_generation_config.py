@@ -8,7 +8,7 @@ class NewsletterGenerationConfigBase(BaseModel):
 class NewsletterGenerationConfigCreate(NewsletterGenerationConfigBase):
     summary_prompt: str
     summary_max_word_count: int
-    min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary: int
+    min_description_len_for_evaluation_prompts: int
     article_redundancy_prompt: str
     article_relevancy_prompt: str
     newsletter_subject_prompt: str
@@ -28,7 +28,7 @@ class NewsletterGenerationConfigInDB(NewsletterGenerationConfigBase):
     id: int
     summary_prompt: str
     summary_max_word_count: int
-    min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary: int
+    min_description_len_for_evaluation_prompts: int
     article_redundancy_prompt: str
     article_relevancy_prompt: str
     newsletter_subject_prompt: str

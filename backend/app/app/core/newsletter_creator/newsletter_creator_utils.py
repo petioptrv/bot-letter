@@ -39,14 +39,13 @@ class NewsletterCreatorConfig(Config):
     text_generation_model: OpenAIModels = OpenAIModels.GPT_4_TURBO
     decision_model: OpenAIModels = OpenAIModels.GPT_4_TURBO
 
-    @validator("min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary")
+    @validator("min_description_len_for_evaluation_prompts")
     def must_be_smaller_than_summary_max_word_count(
         cls, v, values, **kwargs
     ):
         if v > values["summary_max_word_count"]:
             raise ValueError(
-                "min_article_description_to_consider_for_article_evaluation_prompts_instead_of_article_summary"
-                " must be smaller than summary_max_word_count"
+                "min_description_len_for_evaluation_prompts must be smaller than summary_max_word_count"
             )
         return v
 

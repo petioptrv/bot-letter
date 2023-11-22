@@ -62,18 +62,18 @@ class Newsletter(Model):
     content: str
 
 
-class Embedding(Model):
-    vector: np.ndarray
-    model: str
-    cost: Optional["Cost"] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-
-
 class Cost(Model):
     input_tokens: int
     output_tokens: int
+
+
+class Embedding(Model):
+    vector: np.ndarray
+    model: str
+    cost: Optional[Cost] = None
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class CacheItem(Model):

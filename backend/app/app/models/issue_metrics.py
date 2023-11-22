@@ -1,12 +1,16 @@
 from typing import List, TYPE_CHECKING
 
-from sqlalchemy import Column, String, ForeignKey, Integer, PrimaryKeyConstraint
+from sqlalchemy import (
+    Column,
+    String,
+    ForeignKey,
+    Integer,
+    PrimaryKeyConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
-
-if TYPE_CHECKING:
-    from app.models import TokenCost
+from app.models.token_cost import TokenCost
 
 
 class IssueMetrics(Base):
