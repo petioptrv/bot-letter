@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import List
 
 from sqlalchemy import (
     Column,
@@ -16,13 +16,11 @@ from app.models.token_cost import TokenCost
 class IssueMetrics(Base):
     __tablename__ = "issue_metrics"
 
-    issue_id = Column(String(32), ForeignKey("newsletter_issue.issue_id"))
+    metrics_id = Column(
+        String(32), ForeignKey("newsletter_issue.issue_id"), primary_key=True
+    )
     newsletter_generation_config_id = Column(
-        Integer, ForeignKey("newsletter_generation_config.id")
+        Integer, ForeignKey("newsletter_generation_config.id"), nullable=False
     )
     time_to_generate = Column(Integer)
-    token_costs: List["TokenCost"] = relationship("TokenCost")
-
-    __table_args__ = (
-        PrimaryKeyConstraint("issue_id", "newsletter_generation_config_id"),
-    )
+    token_costs: List[TokenCost] = relationship("TokenCost")

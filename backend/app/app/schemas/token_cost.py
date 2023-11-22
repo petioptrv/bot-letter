@@ -6,6 +6,7 @@ class TokenCostBase(Model):
 
 
 class TokenCostCreate(TokenCostBase):
+    metrics_id: str
     issue_id: str
     article_id: str
     action: str

@@ -1,4 +1,10 @@
-from sqlalchemy import Column, String, ForeignKey, PrimaryKeyConstraint, Integer
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    ForeignKeyConstraint,
+    ForeignKey,
+)
 
 from app.db.base_class import Base
 
@@ -6,10 +12,17 @@ from app.db.base_class import Base
 class TokenCost(Base):
     __tablename__ = "token_cost"
 
-    issue_id = Column(String(32), ForeignKey("issue_metrics.issue_id"))
-    article_id = Column(String(32), ForeignKey("issue_article.article_id"))
-    action = Column(String(32))
+    token_cost_id = Column(Integer, primary_key=True, index=True)
+    metrics_id = Column(String(32), ForeignKey("issue_metrics.metrics_id"), nullable=False)
+    issue_id = Column(String(32), nullable=False)
+    article_id = Column(String(36), nullable=False)
+    action = Column(String(32), nullable=False)
     input_tokens = Column(Integer)
     output_tokens = Column(Integer)
 
-    __table_args__ = (PrimaryKeyConstraint("issue_id", "article_id", "action"),)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["issue_id", "article_id"],
+            ["issue_article.issue_id", "issue_article.article_id"],
+        ),
+    )

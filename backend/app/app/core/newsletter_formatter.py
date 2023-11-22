@@ -110,7 +110,7 @@ class NewsletterFormatter:
                   <mj-column>
                     {divider if not first_article_in_section else ''}
                     <mj-text font-size="16px" color="#000">
-                        <h2><a href={item.article.url}>{item.article.title}</a></h2>
+                        <h2><a href={item.article.url} style="text-decoration:none">{item.article.title}</a></h2>
                     </mj-text>
                     <mj-text font-size="14px" color="#999">
                         Published {publishing_utc_datetime.strftime(settings.ARTICLE_PUBLISHED_DT_FORMAT)} UTC.<br>

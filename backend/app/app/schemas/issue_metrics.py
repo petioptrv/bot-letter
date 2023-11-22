@@ -9,7 +9,7 @@ class IssueMetricsBase(Model):
 
 
 class IssueMetricsCreate(IssueMetricsBase):
-    issue_id: str
+    metrics_id: str
     newsletter_generation_config_id: int
     time_to_generate: int
     token_costs: List[TokenCostCreate] = []

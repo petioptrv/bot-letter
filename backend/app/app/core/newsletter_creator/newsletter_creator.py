@@ -29,7 +29,12 @@ from app.core.selection_algos.representative_items_algo import (
     generate_most_representative_items,
 )
 from app.db.session import SessionLocal
-from app.schemas import NewsletterIssueCreate, IssueMetricsCreate, TokenCostCreate
+from app.schemas import (
+    NewsletterIssueCreate,
+    IssueMetricsCreate,
+    TokenCostCreate,
+    IssueArticleCreate,
+)
 from app.utils import send_email
 from app import crud
 
@@ -77,7 +82,7 @@ async def generate_newsletter(
         newsletter_description=newsletter_description,
     )
     in_metrics = IssueMetricsCreate(
-        issue_id=newsletter_issue_id,
+        metrics_id=newsletter_issue_id,
         newsletter_generation_config_id=newsletter_creator_config.version,
         time_to_generate=-1,
     )
@@ -192,6 +197,7 @@ async def build_candidates(
     )
     in_issue.metrics.token_costs.append(
         TokenCostCreate(
+            metrics_id=newsletter_issue_id,
             issue_id=newsletter_issue_id,
             article_id="nw-description",
             action=CreationAction.EMBEDDING,
@@ -301,6 +307,7 @@ async def process_candidate_item(
         )
         in_issue.metrics.token_costs.append(
             TokenCostCreate(
+                metrics_id=newsletter_issue_id,
                 issue_id=newsletter_issue_id,
                 article_id=item.article.article_id,
                 action=CreationAction.RELEVANCY_CHECK,
@@ -318,6 +325,12 @@ async def process_candidate_item(
                 ),
             )
             candidates.irrelevant_candidates.append(item)
+            in_issue.articles.append(
+                IssueArticleCreate(
+                    issue_id=newsletter_issue_id,
+                    article_id=item.article.article_id,
+                )
+            )
         else:
             await process_relevant_candidate_item(
                 openai=openai,
@@ -398,6 +411,7 @@ async def process_relevant_candidate_item(
             )
             in_issue.metrics.token_costs.append(
                 TokenCostCreate(
+                    metrics_id=newsletter_issue_id,
                     issue_id=newsletter_issue_id,
                     article_id=item.article.article_id,
                     action=CreationAction.REDUNDANCY_CHECK,
@@ -420,6 +434,12 @@ async def process_relevant_candidate_item(
             message=f"\nArticle relevant:\n\n{item.article.title}\n{item.article.description}",
         )
         candidates.relevant_candidates.append(item)
+        in_issue.articles.append(
+            IssueArticleCreate(
+                issue_id=newsletter_issue_id,
+                article_id=item.article.article_id,
+            )
+        )
 
 
 async def get_article_selection_text(
@@ -516,6 +536,7 @@ async def ensure_article_is_summarized(
         )
         in_issue.metrics.token_costs.append(
             TokenCostCreate(
+                metrics_id=newsletter_issue_id,
                 issue_id=newsletter_issue_id,
                 article_id=cache_item.article.article_id,
                 action=CreationAction.SUMMARY,
@@ -561,6 +582,7 @@ async def generate_html_for_non_empty_newsletter(
     # )
     # in_issue.metrics.token_costs.append(
     #     TokenCostCreate(
+    #         metrics_id=newsletter_issue_id,
     #         issue_id=newsletter_issue_id,
     #         article_id="nw-subject",
     #         action=CreationAction.SUMMARY,
@@ -569,9 +591,7 @@ async def generate_html_for_non_empty_newsletter(
     #     )
     # )
     # newsletter_subject = subject_response.content
-    newsletter_subject = (
-        f"\"{newsletter_description}\" - {datetime.utcnow().strftime(settings.NEWSLETTER_ISSUE_DATE_FORMAT)}"
-    )
+    newsletter_subject = f'"{newsletter_description}" - {datetime.utcnow().strftime(settings.NEWSLETTER_ISSUE_DATE_FORMAT)}'
 
     newsletter_formatter = NewsletterFormatter()
     html = await newsletter_formatter.format_newsletter_html(
@@ -591,9 +611,7 @@ def generate_html_for_empty_newsletter(
         issue_id=newsletter_issue_id,
         message=f"No new articles found for search term {newsletter_description}",
     )
-    newsletter_subject = (
-        f"\"{newsletter_description}\" - {datetime.utcnow().strftime(settings.NEWSLETTER_ISSUE_DATE_FORMAT)}"
-    )
+    newsletter_subject = f'"{newsletter_description}" - {datetime.utcnow().strftime(settings.NEWSLETTER_ISSUE_DATE_FORMAT)}'
     newsletter_formatter = NewsletterFormatter()
     html = newsletter_formatter.format_newsletter_html_no_new_articles(
         newsletter_description=newsletter_description
@@ -607,10 +625,12 @@ def log_issue_to_db(in_issue: NewsletterIssueCreate):
 
     crud.newsletter_issue.create_issue(db=db_session, obj_in=in_issue)
     for in_article in in_issue.articles:
-        crud.issue_article.create_issue_article(db_session=db_session, obj_in=in_article)
-    crud.issue_metrics.create_issue_metrics(db_session=db_session, obj_in=in_issue.metrics)
+        crud.issue_article.create_issue_article(
+            db=db_session, obj_in=in_article
+        )
+    crud.issue_metrics.create_issue_metrics(db=db_session, obj_in=in_issue.metrics)
     for in_cost in in_issue.metrics.token_costs:
-        crud.token_cost.create_token_cost(db_session=db_session, obj_in=in_cost)
+        crud.token_cost.create_token_cost(db=db_session, obj_in=in_cost)
 
 
 def log_for_newsletter_issue(

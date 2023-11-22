@@ -17,5 +17,6 @@ class NewsletterIssue(Base):
         Integer, ForeignKey("subscription.id"), nullable=False
     )
     timestamp = Column(Integer, nullable=False)
+
     articles: List["IssueArticle"] = relationship("IssueArticle")
     metrics = relationship("IssueMetrics")
