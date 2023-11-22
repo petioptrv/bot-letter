@@ -198,7 +198,6 @@ async def build_candidates(
     in_issue.metrics.token_costs.append(
         TokenCostCreate(
             metrics_id=newsletter_issue_id,
-            issue_id=newsletter_issue_id,
             article_id="nw-description",
             action=CreationAction.EMBEDDING,
             input_tokens=newsletter_description_embedding.cost.input_tokens,
@@ -308,7 +307,6 @@ async def process_candidate_item(
         in_issue.metrics.token_costs.append(
             TokenCostCreate(
                 metrics_id=newsletter_issue_id,
-                issue_id=newsletter_issue_id,
                 article_id=item.article.article_id,
                 action=CreationAction.RELEVANCY_CHECK,
                 input_tokens=relevancy_response.cost.input_tokens,
@@ -412,7 +410,6 @@ async def process_relevant_candidate_item(
             in_issue.metrics.token_costs.append(
                 TokenCostCreate(
                     metrics_id=newsletter_issue_id,
-                    issue_id=newsletter_issue_id,
                     article_id=item.article.article_id,
                     action=CreationAction.REDUNDANCY_CHECK,
                     input_tokens=redundancy_response.cost.input_tokens,
@@ -537,7 +534,6 @@ async def ensure_article_is_summarized(
         in_issue.metrics.token_costs.append(
             TokenCostCreate(
                 metrics_id=newsletter_issue_id,
-                issue_id=newsletter_issue_id,
                 article_id=cache_item.article.article_id,
                 action=CreationAction.SUMMARY,
                 input_tokens=summary_content.cost.input_tokens,
@@ -583,7 +579,6 @@ async def generate_html_for_non_empty_newsletter(
     # in_issue.metrics.token_costs.append(
     #     TokenCostCreate(
     #         metrics_id=newsletter_issue_id,
-    #         issue_id=newsletter_issue_id,
     #         article_id="nw-subject",
     #         action=CreationAction.SUMMARY,
     #         input_tokens=subject_response.cost.input_tokens,
@@ -638,4 +633,15 @@ def log_for_newsletter_issue(
 ):
     logging.getLogger(__name__).log(
         level=level, msg=f"ni-{issue_id}: {message}", exc_info=exc_info
+    )
+
+
+if __name__ == "__main__":
+    asyncio.run(
+        generate_newsletter(
+            newsletter_description="I want news about the Gaza Strip war. I am interested in peace resolution attempts.",
+            user_id=1,
+            subscription_id=11,
+            email="botletternews@gmail.com",
+        )
     )

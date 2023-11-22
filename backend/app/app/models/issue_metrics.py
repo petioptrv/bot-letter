@@ -5,7 +5,6 @@ from sqlalchemy import (
     String,
     ForeignKey,
     Integer,
-    PrimaryKeyConstraint,
 )
 from sqlalchemy.orm import relationship
 
