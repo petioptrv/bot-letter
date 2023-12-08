@@ -6,6 +6,34 @@ The application allows users to define custom newsletter descriptions. Each day,
 the backend will generate a newsletter based on the user's preferences and send it to the user's email.
 The articles constituting the newsletter will be summarized for the user's convenience.
 
+## Viability Analysis
+
+The project's cost was evaluated by implementing two different approaches to constructing each newsletter issue.
+
+Both approaches used ChatGPT-4 turbo as language model.
+
+The first approach was to start by retrieving the top X relevant articles and, one by one, checking if the
+article is relevant to the user's newsletter description (one ChatGPT query), and if it is redundant with any of the
+articles already added to the current issue (one query per existing article) until we get a total of Y articles for
+the current newsletter.
+
+Via experimental testing and metrics tracking, with X = 10 and Y = 5, it was determined that this approach yielded
+fairly good quality newsletter issues (few, but not zero, redundant articles), but the cost was an average of 0.30 USD
+per issue. If a newsletter is delivered 5 days / week, this is about 5 * 4 * 0.30 = 6 USD / month for a single newsletter.
+
+The second approach involved retrieving the top X relevant articles and then, in one ChatGPT query, asking which ones
+are relevant and which ones are redundant. This approach was cost-effective at an average of 0.10 USD per issue, but
+it was far from acceptable in terms of issue quality—many redundant articles were included in the issues.
+
+Other static costs across approaches and across issues are:
+- NewsData subscription
+- AWS costs
+- Domain name costs
+
+The cost of embeddings was negligible and it is the same for both approaches. It will be lowered further by an increase
+in user base as summaries are cached and re-used next time an article is retrieved as relevant to a particular
+newsletter description.
+
 ## Technologies Used
 
 - Frontend
