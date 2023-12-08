@@ -19,7 +19,7 @@ def can_create(
     """
     Check if the current user can create a subscription.
     """
-    return len(current_user.subscriptions) < settings.MAX_SUBSCRIPTIONS
+    return len(current_user.get_active_subscriptions()) < settings.MAX_SUBSCRIPTIONS
 
 
 @router.post("/create", response_model=schemas.SubscriptionInDB)
@@ -51,21 +51,26 @@ async def create_subscription(
             status_code=400,
             detail=f"Description must be at least {settings.MIN_NEWSLETTER_DESCRIPTION_LENGTH} characters.",
         )
-    if (
-        crud.subscription.get_by_owner_and_description(
-            db=db,
-            owner_id=current_user.id,
-            newsletter_description=subscription_in.newsletter_description,
-        )
-        is not None
-    ):
+    existing_subscription = crud.subscription.get_by_owner_and_description(
+        db=db,
+        owner_id=current_user.id,
+        newsletter_description=subscription_in.newsletter_description,
+    )
+    if existing_subscription is not None and existing_subscription.is_active:
         raise HTTPException(
             status_code=409,
             detail="You already have a subscription for this newsletter description.",
         )
-    subscription = crud.subscription.create_with_owner(
-        db=db, obj_in=subscription_in, owner_id=current_user.id
-    )
+    if existing_subscription is not None and not existing_subscription.is_active:
+        subscription_in.is_active = True
+        crud.subscription.update(
+            db=db, db_obj=existing_subscription, obj_in=subscription_in
+        )
+        subscription = existing_subscription
+    else:
+        subscription = crud.subscription.create_with_owner(
+            db=db, obj_in=subscription_in, owner_id=current_user.id
+        )
     return subscription
 
 
@@ -81,6 +86,8 @@ async def delete_subscription(
     subscription = crud.subscription.delete_by_owner(
         db=db, obj_out=subscription_out, owner_id=current_user.id
     )
+    subscription_in = schemas.SubscriptionUpdate(is_active=False)
+    crud.subscription.update(db=db, db_obj=subscription_out, obj_in=subscription_in)
     return subscription
 
 
@@ -98,7 +105,11 @@ def can_issue_sample(
         owner_id=current_user.id,
         newsletter_description=subscription.newsletter_description,
     )
-    can_issue = current_user.is_superuser or (db_subscription is not None and db_subscription.sample_available)
+    can_issue = current_user.is_superuser or (
+        db_subscription is not None
+        and db_subscription.sample_available
+        and db_subscription.is_active
+    )
     logging.getLogger(__name__).debug(f"can_issue_sample: {can_issue}")
     return can_issue
 
@@ -127,11 +138,23 @@ async def issue_newsletter_sample(
             status_code=400,
             detail="You have already issued a one-time sample for this subscription.",
         )
+    if not db_subscription.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail="This subscription is no longer active.",
+        )
     celery_app.send_task(
         name="app.worker.generate_newsletter_task",
-        args=[subscription.newsletter_description, current_user.id, db_subscription.id, current_user.email],
+        args=[
+            subscription.newsletter_description,
+            current_user.id,
+            db_subscription.id,
+            current_user.email,
+        ],
     )
-    subscription_in = schemas.SubscriptionUpdate(sample_available=False or current_user.is_superuser)
+    subscription_in = schemas.SubscriptionUpdate(
+        sample_available=False or current_user.is_superuser
+    )
     crud.subscription.update(db=db, db_obj=db_subscription, obj_in=subscription_in)
 
     return db_subscription

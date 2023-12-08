@@ -11,6 +11,7 @@ class NewsletterGenerationConfigCreate(NewsletterGenerationConfigBase):
     min_description_len_for_evaluation_prompts: int
     article_redundancy_prompt: str
     article_relevancy_prompt: str
+    articles_qualifier_prompt: str
     newsletter_subject_prompt: str
     max_articles_per_newsletter: int
     max_processed_articles_per_newsletter: int
@@ -31,6 +32,7 @@ class NewsletterGenerationConfigInDB(NewsletterGenerationConfigBase):
     min_description_len_for_evaluation_prompts: int
     article_redundancy_prompt: str
     article_relevancy_prompt: str
+    articles_qualifier_prompt: str
     newsletter_subject_prompt: str
     max_articles_per_newsletter: int
     max_processed_articles_per_newsletter: int

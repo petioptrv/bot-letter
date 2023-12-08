@@ -778,7 +778,9 @@ $RECYCLE.BIN/
 
 
 /.env
-/.env-*
+/.env-back
+/.env-docker
+/.env-production
 /bot-letter.pem
 /docker-compose.override.yml
 qodana.yaml

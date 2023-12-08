@@ -18,6 +18,7 @@ class SubscriptionIssue(SubscriptionBase):
 
 class SubscriptionUpdate(SubscriptionBase):
     sample_available: Optional[bool] = None
+    is_active: Optional[bool] = None
 
 
 class SubscriptionDelete(SubscriptionBase):

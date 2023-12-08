@@ -19,3 +19,6 @@ class User(Base):
     subscriptions: List["Subscription"] = relationship(
         "Subscription", back_populates="owner"
     )
+
+    def get_active_subscriptions(self) -> List["Subscription"]:
+        return [s for s in self.subscriptions if s.is_active]

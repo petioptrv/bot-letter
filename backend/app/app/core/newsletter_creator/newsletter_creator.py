@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import time
 from datetime import datetime
@@ -45,6 +46,7 @@ class CreationAction(str, Enum):
     EMBEDDING = "embedding"
     RELEVANCY_CHECK = "relevancy_check"
     REDUNDANCY_CHECK = "redundancy_check"
+    ALL_ARTICLES_QUALIFIER_CHECK = "all_articles_qualifier_check"
     SUMMARY = "summary"
 
 
@@ -192,8 +194,11 @@ async def build_candidates(
         message=f"Building candidates from {len(news_items)} articles",
     )
 
-    newsletter_description_embedding = await openai.get_embedding(
-        model=OpenAIModels.TEXT_EMBEDDING_ADA_002, text=newsletter_description
+    newsletter_description_embedding = await call_openai_api_with_rate_limit_protection(
+        newsletter_issue_id=newsletter_issue_id,
+        async_func=openai.get_embedding,
+        model=OpenAIModels.TEXT_EMBEDDING_ADA_002,
+        text=newsletter_description,
     )
     in_issue.metrics.token_costs.append(
         TokenCostCreate(
@@ -204,43 +209,126 @@ async def build_candidates(
             output_tokens=newsletter_description_embedding.cost.output_tokens,
         )
     )
-    processed_articles = 0
-    candidates = Candidates()
     representative_items_generator = generate_most_representative_items(
         target_vector=newsletter_description_embedding.vector,
         cache_items=news_items,
     )
 
+    validated_candidate_items = []
     async for item in representative_items_generator:
         if is_valid_candidate_item(
             newsletter_issue_id=newsletter_issue_id,
             item=item,
-            candidates=candidates,
+            candidate_items=validated_candidate_items,
         ):
-            await process_candidate_item(
-                openai=openai,
-                cache=cache,
-                newsletter_description=newsletter_description,
-                newsletter_issue_id=newsletter_issue_id,
-                candidates=candidates,
-                item=item,
-                in_issue=in_issue,
-            )
-            processed_articles += 1
+            validated_candidate_items.append(item)
             if (
-                processed_articles
+                len(validated_candidate_items)
                 == newsletter_creator_config.max_processed_articles_per_newsletter
-                or len(candidates.relevant_candidates)
-                + len(candidates.irrelevant_candidates)
-                == newsletter_creator_config.max_articles_per_newsletter
             ):
                 break
+
+    candidates = await select_candidates(
+        openai=openai,
+        cache=cache,
+        newsletter_description=newsletter_description,
+        newsletter_issue_id=newsletter_issue_id,
+        validated_candidate_items=validated_candidate_items,
+        in_issue=in_issue,
+    )
+    return candidates
+
+
+async def select_candidates(
+    openai: OpenAI,
+    cache: AioRedisCache,
+    newsletter_description: str,
+    newsletter_issue_id: str,
+    validated_candidate_items: List[CacheItem],
+    in_issue: NewsletterIssueCreate,
+):
+    articles_selection_prompt = (
+        newsletter_creator_config.articles_qualifier_prompt.format(
+            newsletter_description=newsletter_description,
+            articles_count=len(validated_candidate_items),
+        )
+    )
+    for i, item in enumerate(validated_candidate_items):
+        article_selection_text = await get_article_selection_text(
+            openai=openai,
+            cache=cache,
+            newsletter_issue_id=newsletter_issue_id,
+            item=item,
+            in_issue=in_issue,
+        )
+        articles_selection_prompt += (
+            f"\n\nArticle {i + 1}:" f"\n\n{article_selection_text}"
+        )
+
+    articles_selection_system_message = OpenAIChatCompletion(
+        role=OpenAIRoles.SYSTEM, content=articles_selection_prompt
+    )
+    article_selection_response = await call_openai_api_with_rate_limit_protection(
+        newsletter_issue_id=newsletter_issue_id,
+        async_func=openai.get_chat_completions,
+        model=newsletter_creator_config.decision_model,
+        messages=[
+            articles_selection_system_message,
+            OpenAIChatCompletion(
+                role=OpenAIRoles.USER,
+                content="",
+            ),
+        ],
+    )
+    in_issue.metrics.token_costs.append(
+        TokenCostCreate(
+            metrics_id=newsletter_issue_id,
+            article_id="nw-selection",
+            action=CreationAction.ALL_ARTICLES_QUALIFIER_CHECK,
+            input_tokens=article_selection_response.cost.input_tokens,
+            output_tokens=article_selection_response.cost.output_tokens,
+        )
+    )
+    try:
+        article_selection = json.loads(
+            article_selection_response.content.removeprefix("```json\n").removesuffix(
+                "\n```"
+            )
+        )
+    except json.JSONDecodeError as e:
+        log_for_newsletter_issue(
+            level=logging.ERROR,
+            issue_id=newsletter_issue_id,
+            message=f"Failed to parse article selection response: {article_selection_response.content}",
+            exc_info=e,
+        )
+        article_selection = {"include": [], "redundant": []}
+
+    redundant_map = {
+        duplicate: redundant_list[0]
+        for redundant_list in article_selection["redundant"]
+        for duplicate in redundant_list[1:]
+    }
+    candidates = Candidates()
+    for i, item in enumerate(validated_candidate_items):
+        if i + 1 in redundant_map:
+            continue
+        in_issue.articles.append(
+            IssueArticleCreate(
+                issue_id=newsletter_issue_id,
+                article_id=item.article.article_id,
+            )
+        )
+        if i + 1 in article_selection["include"]:
+            candidates.relevant_candidates.append(item)
+        else:
+            candidates.irrelevant_candidates.append(item)
 
     return candidates
 
 
 def is_valid_candidate_item(
-    newsletter_issue_id: str, item: CacheItem, candidates: Candidates
+    newsletter_issue_id: str, item: CacheItem, candidate_items: List[CacheItem]
 ) -> bool:
     valid = True
 
@@ -253,12 +341,14 @@ def is_valid_candidate_item(
         log_for_newsletter_issue(
             level=logging.INFO,
             issue_id=newsletter_issue_id,
-            message=f"Article too long:\n\n{item.article.title}\n{item.article.description}",
+            message=f"Article too short:\n\n{item.article.title}\n{item.article.description}",
         )
         valid = False
 
     title_already_included = (
-        item.article.title in candidates.candidate_titles if valid else False
+        item.article.title in [ci.article.title for ci in candidate_items]
+        if valid
+        else False
     )
     if valid and title_already_included:
         log_for_newsletter_issue(
@@ -269,174 +359,6 @@ def is_valid_candidate_item(
         valid = False
 
     return valid
-
-
-async def process_candidate_item(
-    openai: OpenAI,
-    cache: AioRedisCache,
-    newsletter_description: str,
-    newsletter_issue_id: str,
-    candidates: Candidates,
-    item: CacheItem,
-    in_issue: NewsletterIssueCreate,
-):
-    log_for_newsletter_issue(
-        level=logging.DEBUG,
-        issue_id=newsletter_issue_id,
-        message=f"Processing candidate item {item.article.title}.",
-    )
-    try:
-        article_selection_text = await get_article_selection_text(
-            openai=openai,
-            cache=cache,
-            newsletter_issue_id=newsletter_issue_id,
-            item=item,
-            in_issue=in_issue,
-        )
-        relevancy_prompt = newsletter_creator_config.article_relevancy_prompt.format(
-            newsletter_description=newsletter_description,
-            current_article_summary=article_selection_text,
-        )
-        relevancy_completion = OpenAIChatCompletion(
-            role=OpenAIRoles.USER, content=relevancy_prompt
-        )
-        relevancy_response = await openai.get_chat_completions(
-            model=OpenAIModels.GPT_4_TURBO,
-            messages=[relevancy_completion],
-        )
-        in_issue.metrics.token_costs.append(
-            TokenCostCreate(
-                metrics_id=newsletter_issue_id,
-                article_id=item.article.article_id,
-                action=CreationAction.RELEVANCY_CHECK,
-                input_tokens=relevancy_response.cost.input_tokens,
-                output_tokens=relevancy_response.cost.output_tokens,
-            )
-        )
-
-        if relevancy_response.content.lower() in ["no", "no."]:
-            log_for_newsletter_issue(
-                level=logging.INFO,
-                issue_id=newsletter_issue_id,
-                message=(
-                    f"\nArticle not relevant:\n\n{item.article.title}\n{item.article.description}"
-                ),
-            )
-            candidates.irrelevant_candidates.append(item)
-            in_issue.articles.append(
-                IssueArticleCreate(
-                    issue_id=newsletter_issue_id,
-                    article_id=item.article.article_id,
-                )
-            )
-        else:
-            await process_relevant_candidate_item(
-                openai=openai,
-                cache=cache,
-                newsletter_issue_id=newsletter_issue_id,
-                candidates=candidates,
-                item=item,
-                in_issue=in_issue,
-            )
-    except IOError as e:
-        if "Rate limit reached" in str(e):
-            log_for_newsletter_issue(
-                level=logging.WARNING,
-                issue_id=newsletter_issue_id,
-                message="Rate limit reached. Waiting 1 second.",
-            )
-            await asyncio.sleep(1)
-        else:
-            log_for_newsletter_issue(
-                level=logging.ERROR,
-                issue_id=newsletter_issue_id,
-                message=f"Failed to parse summary for article {item.article}",
-                exc_info=e,
-            )
-    except Exception as e:
-        log_for_newsletter_issue(
-            level=logging.ERROR,
-            issue_id=newsletter_issue_id,
-            message=f"Failed to parse summary for article {item.article}",
-            exc_info=e,
-        )
-
-
-async def process_relevant_candidate_item(
-    openai: OpenAI,
-    cache: AioRedisCache,
-    newsletter_issue_id: str,
-    candidates: Candidates,
-    item: CacheItem,
-    in_issue: NewsletterIssueCreate,
-):
-    log_for_newsletter_issue(
-        level=logging.DEBUG,
-        issue_id=newsletter_issue_id,
-        message=f"Processing relevant candidate item {item.article.title}.",
-    )
-    include = True
-    if len(candidates.relevant_candidates) != 0:
-        for previous_newsletter_item in chain(
-            candidates.relevant_candidates, candidates.irrelevant_candidates
-        ):
-            previous_article_selection_text = await get_article_selection_text(
-                openai=openai,
-                cache=cache,
-                newsletter_issue_id=newsletter_issue_id,
-                item=previous_newsletter_item,
-                in_issue=in_issue,
-            )
-            current_article_selection_text = await get_article_selection_text(
-                openai=openai,
-                cache=cache,
-                newsletter_issue_id=newsletter_issue_id,
-                item=item,
-                in_issue=in_issue,
-            )
-            redundancy_prompt = (
-                newsletter_creator_config.article_redundancy_prompt.format(
-                    previous_article_summary=previous_article_selection_text,
-                    current_article_summary=current_article_selection_text,
-                )
-            )
-            redundancy_completion = OpenAIChatCompletion(
-                role=OpenAIRoles.USER, content=redundancy_prompt
-            )
-            redundancy_response = await openai.get_chat_completions(
-                model=OpenAIModels.GPT_4_TURBO,
-                messages=[redundancy_completion],
-            )
-            in_issue.metrics.token_costs.append(
-                TokenCostCreate(
-                    metrics_id=newsletter_issue_id,
-                    article_id=item.article.article_id,
-                    action=CreationAction.REDUNDANCY_CHECK,
-                    input_tokens=redundancy_response.cost.input_tokens,
-                    output_tokens=redundancy_response.cost.output_tokens,
-                )
-            )
-            if redundancy_response.content.lower() in ["yes", "yes."]:
-                include = False
-                log_for_newsletter_issue(
-                    level=logging.INFO,
-                    issue_id=newsletter_issue_id,
-                    message=f"Article redundant:\n\n{item.article.title}\n{item.article.description}",
-                )
-                break
-    if include:
-        log_for_newsletter_issue(
-            level=logging.DEBUG,
-            issue_id=newsletter_issue_id,
-            message=f"\nArticle relevant:\n\n{item.article.title}\n{item.article.description}",
-        )
-        candidates.relevant_candidates.append(item)
-        in_issue.articles.append(
-            IssueArticleCreate(
-                issue_id=newsletter_issue_id,
-                article_id=item.article.article_id,
-            )
-        )
 
 
 async def get_article_selection_text(
@@ -521,8 +443,10 @@ async def ensure_article_is_summarized(
         article_summary_system_message = OpenAIChatCompletion(
             role=OpenAIRoles.SYSTEM, content=article_summary_prompt
         )
-        summary_content = await openai.get_chat_completions(
-            model=OpenAIModels.GPT_4_TURBO,
+        summary_content = await call_openai_api_with_rate_limit_protection(
+            newsletter_issue_id=newsletter_issue_id,
+            async_func=openai.get_chat_completions,
+            model=newsletter_creator_config.text_generation_model,
             messages=[
                 article_summary_system_message,
                 OpenAIChatCompletion(
@@ -550,6 +474,27 @@ async def ensure_article_is_summarized(
         )
 
 
+async def call_openai_api_with_rate_limit_protection(
+    newsletter_issue_id: str, async_func: callable, *args, **kwargs
+) -> any:
+    success = False
+
+    while not success:
+        try:
+            result = await async_func(*args, **kwargs)
+            success = True
+        except IOError as e:
+            if "Rate limit reached" in str(e):
+                log_for_newsletter_issue(
+                    level=logging.WARNING,
+                    issue_id=newsletter_issue_id,
+                    message="Rate limit reached. Waiting 1 second.",
+                )
+                await asyncio.sleep(1)
+
+    return result
+
+
 async def generate_html_for_non_empty_newsletter(
     api_provider_: APIProvider,
     openai: OpenAI,
@@ -558,34 +503,6 @@ async def generate_html_for_non_empty_newsletter(
     newsletter_description: str,
     in_issue: NewsletterIssueCreate,
 ) -> NewsletterHTML:
-    none_relevant = all([not item.relevant for item in newsletter_items])
-    # newsletter_subject_prompt = (
-    #     newsletter_creator_config.newsletter_subject_prompt.format(
-    #         newsletter_content="\n\n".join(
-    #             [
-    #                 item.summary.summary
-    #                 for item in newsletter_items
-    #                 if item.relevant or none_relevant
-    #             ]
-    #         )
-    #     )
-    # )
-    # subject_completion = OpenAIChatCompletion(
-    #     role=OpenAIRoles.USER, content=newsletter_subject_prompt
-    # )
-    # subject_response = await openai.get_chat_completions(
-    #     model=OpenAIModels.GPT_4_TURBO, messages=[subject_completion]
-    # )
-    # in_issue.metrics.token_costs.append(
-    #     TokenCostCreate(
-    #         metrics_id=newsletter_issue_id,
-    #         article_id="nw-subject",
-    #         action=CreationAction.SUMMARY,
-    #         input_tokens=subject_response.cost.input_tokens,
-    #         output_tokens=subject_response.cost.output_tokens,
-    #     )
-    # )
-    # newsletter_subject = subject_response.content
     newsletter_subject = f'"{newsletter_description}" - {datetime.utcnow().strftime(settings.NEWSLETTER_ISSUE_DATE_FORMAT)}'
 
     newsletter_formatter = NewsletterFormatter()
@@ -620,9 +537,7 @@ def log_issue_to_db(in_issue: NewsletterIssueCreate):
 
     crud.newsletter_issue.create_issue(db=db_session, obj_in=in_issue)
     for in_article in in_issue.articles:
-        crud.issue_article.create_issue_article(
-            db=db_session, obj_in=in_article
-        )
+        crud.issue_article.create_issue_article(db=db_session, obj_in=in_article)
     crud.issue_metrics.create_issue_metrics(db=db_session, obj_in=in_issue.metrics)
     for in_cost in in_issue.metrics.token_costs:
         crud.token_cost.create_token_cost(db=db_session, obj_in=in_cost)
@@ -637,11 +552,29 @@ def log_for_newsletter_issue(
 
 
 if __name__ == "__main__":
+    from app.schemas import SubscriptionCreate
+
+    newsletter_description = "I want a newsletter about the video game industry. I am interested in the business and venture capital side of the industry."
+    user_id = 1
+    db_session = SessionLocal()
+
+    subscription = crud.subscription.get_by_owner_and_description(
+        db=db_session, owner_id=user_id, newsletter_description=newsletter_description
+    )
+    if subscription is None:
+        subscription = crud.subscription.create_with_owner(
+            db=db_session,
+            obj_in=SubscriptionCreate(newsletter_description=newsletter_description),
+            owner_id=user_id,
+        )
+
+    subscription_id = subscription.id
+
     asyncio.run(
         generate_newsletter(
-            newsletter_description="I want news about the Gaza Strip war. I am interested in peace resolution attempts.",
-            user_id=1,
-            subscription_id=11,
+            newsletter_description=newsletter_description,
+            user_id=user_id,
+            subscription_id=subscription_id,
             email="botletternews@gmail.com",
         )
     )

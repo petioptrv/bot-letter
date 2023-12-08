@@ -11,6 +11,7 @@ class NewsletterGenerationConfig(Base):
     min_description_len_for_evaluation_prompts = Column(Integer, default=0)
     article_redundancy_prompt = Column(String, default="")
     article_relevancy_prompt = Column(String, default="")
+    articles_qualifier_prompt = Column(String, default="")
     newsletter_subject_prompt = Column(String, default="")
     max_articles_per_newsletter = Column(Integer, default=0)
     max_processed_articles_per_newsletter = Column(Integer, default=0)

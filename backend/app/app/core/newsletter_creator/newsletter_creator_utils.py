@@ -11,7 +11,8 @@ class NewsletterCreatorConfig(Config):
     summary_prompt: str = (
         "You are an editor for a newsletter that summarizes articles in up to {word_count} words."
         " The user will provide you with an article and you will reply with the summary and only"
-        " the summary. Feel free to break the summary into easily digestible paragraphs."
+        " the summary. The summary itself should be in an article form and will be included in a newsletter"
+        " as a shorter version of the full article. Feel free to break the summary into easily digestible paragraphs."
     )
     summary_max_word_count: int = 350
     min_description_len_for_evaluation_prompts: int = 200
@@ -28,6 +29,21 @@ class NewsletterCreatorConfig(Config):
         "\n\nBased on the description, would you include the following article in the newsletter:"
         "\n\n{current_article_summary}\n\nOnly reply with yes or no."
     )
+    articles_qualifier_prompt: str = (
+        "You are a newsletter curator for my personal newsletter. Here is my description of the newsletter:"
+        " \"{newsletter_description}\" I will give you {articles_count} articles. I want you to tell me which,"
+        " if any, of the articles you would include in the next issue of the newsletter based on relevancy."
+        " Also, I want you to tell me which, if any, of the articles are mutually redundant—in other words,"
+        " which articles cover the same topics/events."
+        "\n\nYour response will be in JSON format. For example, if articles 1, 2 and 3 are relevant,"
+        " and articles 2 and 3 and 4 and 5 have redundant information, your reply will be:"
+        "\n\n{{"
+        "\n    \"include\": [1, 2, 3],"
+        "\n    \"redundant\": [[2, 3], [4, 5]]"
+        "\n}}"
+        "\n\nThis JSON will be your only response, nothing else."
+        "\n\nHere are the articles:"
+    )
     newsletter_subject_prompt: str = (
         "You are a newsletter editor curating articles for a newsletter. Your task is to come up with an email"
         " subject for the latest newsletter email. I will provide you with the content of the newsletter and you"
@@ -35,7 +51,7 @@ class NewsletterCreatorConfig(Config):
         " line should not be enclosed in quotes. Here is the content of the newsletter:\n\n{newsletter_content}"
     )
     max_articles_per_newsletter: int = 5
-    max_processed_articles_per_newsletter: int = 10
+    max_processed_articles_per_newsletter: int = 7
     text_generation_model: OpenAIModels = OpenAIModels.GPT_4_TURBO
     decision_model: OpenAIModels = OpenAIModels.GPT_4_TURBO
 

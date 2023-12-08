@@ -47,6 +47,8 @@ class CRUDNewsletterGenerationConfig(
                 == config_in.article_redundancy_prompt,
                 NewsletterGenerationConfig.article_relevancy_prompt
                 == config_in.article_relevancy_prompt,
+                NewsletterGenerationConfig.articles_qualifier_prompt
+                == config_in.articles_qualifier_prompt,
                 NewsletterGenerationConfig.newsletter_subject_prompt
                 == config_in.newsletter_subject_prompt,
                 NewsletterGenerationConfig.max_articles_per_newsletter
