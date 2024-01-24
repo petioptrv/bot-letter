@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 from typing import Dict, Optional
 
 import aioredis
@@ -46,7 +47,9 @@ class AioRedisCache(CacheBase):
         await self._conn.hset(name=item_name, mapping=item)
 
     async def clear_all_items(self, newsletter_description: Optional[str]):
-        await self.clear_oldest_items(newsletter_description=newsletter_description, max_items_to_keep=0)
+        await self.clear_oldest_items(
+            newsletter_description=newsletter_description, max_items_to_keep=0
+        )
 
     async def clear_oldest_items(
         self, newsletter_description: Optional[str], max_items_to_keep: int
@@ -72,13 +75,25 @@ class AioRedisCache(CacheBase):
         if len(keys_to_remove) != 0:
             await self._conn.delete(*keys_to_remove)
 
-    async def get_items_since(self, newsletter_description: Optional[str], since_timestamp: float) -> [CacheItem]:
-        sorted_items = await self._get_sorted_key_item_tuples(newsletter_description=newsletter_description)
-        items = [item for _, item in sorted_items if item.article.publishing_timestamp >= since_timestamp]
+    async def get_items_since(
+        self, newsletter_description: Optional[str], since_timestamp: float
+    ) -> [CacheItem]:
+        sorted_items = await self._get_sorted_key_item_tuples(
+            newsletter_description=newsletter_description
+        )
+        items = [
+            item
+            for _, item in sorted_items
+            if item.article.publishing_timestamp >= since_timestamp
+        ]
         return items
 
-    async def get_newest_item(self, newsletter_description: Optional[str]) -> Optional[CacheItem]:
-        sorted_items = await self._get_sorted_key_item_tuples(newsletter_description=newsletter_description)
+    async def get_newest_item(
+        self, newsletter_description: Optional[str]
+    ) -> Optional[CacheItem]:
+        sorted_items = await self._get_sorted_key_item_tuples(
+            newsletter_description=newsletter_description
+        )
         if len(sorted_items) != 0:
             newest_item = sorted_items[0][1]
         else:
@@ -118,6 +133,7 @@ class AioRedisCache(CacheBase):
         self, newsletter_description: Optional[str]
     ) -> [(str, CacheItem)]:
         keys = await self._get_item_keys()
+        logging.getLogger(name=__name__).debug(msg=f"Found {len(keys)} keys in the cache")
         if keys:
             pipeline = self._conn.pipeline()
             for key in keys:
@@ -137,7 +153,7 @@ class AioRedisCache(CacheBase):
         return sorted_keys_items
 
     async def _get_item_keys(self) -> [str]:
-        item_key_matcher = "*:*"
+        item_key_matcher = "*"
         keys = await self._conn.keys(item_key_matcher)
         return keys
 
