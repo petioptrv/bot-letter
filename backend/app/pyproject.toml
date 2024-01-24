@@ -36,6 +36,7 @@ slowapi = "^0.1.8"
 black = "^23.9.1"
 docker-auto-labels = "^0.2.3"
 Pillow = "^10.1.0"
+boto3 = "^1.34.26"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
@@ -53,6 +54,20 @@ notebook = "^7.0.6"
 pandas = "^2.1.3"
 pymongo = "^4.6.0"
 psycopg2-binary = "^2.9.9"
+datasets = {version = ">=2.13.0", extras = ["s3"]}
+sagemaker = ">=2.190.0"
+gradio = "3.50.2"
+protobuf = "^4.25.2"
+torch = "^2.1.2"
+torchvision = "^0.16.2"
+transformers = "^4.36.1"
+sentencepiece = "^0.1.99"
+
+
+[[tool.poetry.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
 
 [tool.isort]
 multi_line_output = 3
