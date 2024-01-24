@@ -9,7 +9,7 @@ from app.schemas import RelevancyPromptCreate, RelevancyPromptUpdate
 class CRUDRelevancyPrompt(
     CRUDBase[RelevancyPrompt, RelevancyPromptCreate, RelevancyPromptUpdate]
 ):
-    def create_Relevancy_prompt(
+    def create_relevancy_prompt(
         self, db: Session, *, obj_in: RelevancyPromptCreate
     ) -> RelevancyPrompt:
         obj_in_data = jsonable_encoder(obj_in)

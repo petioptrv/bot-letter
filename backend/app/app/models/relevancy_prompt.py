@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, PrimaryKeyConstraint, ForeignKey, Boolean
+from sqlalchemy import Column, String, PrimaryKeyConstraint, ForeignKey, Boolean
 
 from app.db.base_class import Base
 
@@ -8,6 +8,7 @@ class RelevancyPrompt(Base):
 
     issue_id = Column(String(32), ForeignKey("newsletter_issue.issue_id"))
     article_id = Column(String(36), nullable=False)
+    response = Column(Boolean, nullable=False)
 
     __table_args__ = (
         PrimaryKeyConstraint("issue_id", "article_id"),

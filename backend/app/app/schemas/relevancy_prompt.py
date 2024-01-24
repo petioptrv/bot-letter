@@ -8,6 +8,7 @@ class RelevancyPromptBase(BaseModel):
 class RelevancyPromptCreate(RelevancyPromptBase):
     issue_id: str
     article_id: str
+    response: bool
 
 
 class RelevancyPromptUpdate(RelevancyPromptBase):
