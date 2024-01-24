@@ -11,6 +11,7 @@ from app.core.api_provider import APIProvider
 from app.core.data_providers.news_data_io.news_data_io_utils import (
     NewsDataIOCategories,
     NewsDataIOConfig,
+    MAX_TIMEFRAME_MINUTES,
 )
 from app.base_types import NewsArticle, NewsArticleSearchResults
 
@@ -67,9 +68,18 @@ class NewsDataIO:
         language: str,
         start_from_ts: int,
     ) -> Dict:
-
         timeframe_minutes = int((time.time() - start_from_ts) // 60)
-        timeframe = f"{timeframe_minutes + 1}m"
+        if timeframe_minutes >= MAX_TIMEFRAME_MINUTES:
+            timeframe_minutes = MAX_TIMEFRAME_MINUTES
+            timeframe = f"{timeframe_minutes}m"
+            logging.getLogger(name=__name__).warning(
+                msg=f"Getting news data from NewsDataIO for {timeframe} (largest timeframe possible)"
+            )
+        else:
+            timeframe = f"{timeframe_minutes + 1}m"
+            logging.getLogger(name=__name__).debug(
+                msg=f"Getting news data from NewsDataIO for {timeframe}"
+            )
         params = {
             "language": language,
             "timeframe": timeframe,
@@ -97,7 +107,9 @@ class NewsDataIO:
             else:
                 responses["results"].extend(response["results"])
             params["page"] = response["nextPage"]
-            earliest_timestamp = self._to_utc_timestamp(pub_date_string=response["results"][-1]["pubDate"])
+            earliest_timestamp = self._to_utc_timestamp(
+                pub_date_string=response["results"][-1]["pubDate"]
+            )
             done = (
                 len(response["results"]) >= max_page_count
                 or response["nextPage"] is None
@@ -110,6 +122,8 @@ class NewsDataIO:
 
     @staticmethod
     def _to_utc_timestamp(pub_date_string: str) -> int:
-        utc_dt = datetime.strptime(pub_date_string, "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
+        utc_dt = datetime.strptime(pub_date_string, "%Y-%m-%d %H:%M:%S").replace(
+            tzinfo=pytz.utc
+        )
         timestamp = int(utc_dt.timestamp())
         return timestamp

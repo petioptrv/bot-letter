@@ -239,6 +239,40 @@ async def build_candidates(
     return candidates
 
 
+def is_valid_candidate_item(
+    newsletter_issue_id: str, item: CacheItem, candidate_items: List[CacheItem]
+) -> bool:
+    valid = True
+
+    length_valid = (
+        len(item.article.content) > newsletter_creator_config.summary_max_word_count
+        if valid
+        else False
+    )
+    if valid and not length_valid:
+        log_for_newsletter_issue(
+            level=logging.INFO,
+            issue_id=newsletter_issue_id,
+            message=f"Article too short:\n\n{item.article.title}\n{item.article.description}",
+        )
+        valid = False
+
+    title_already_included = (
+        item.article.title in [ci.article.title for ci in candidate_items]
+        if valid
+        else False
+    )
+    if valid and title_already_included:
+        log_for_newsletter_issue(
+            level=logging.INFO,
+            issue_id=newsletter_issue_id,
+            message=f"Article already included:\n\n{item.article.title}\n{item.article.description}",
+        )
+        valid = False
+
+    return valid
+
+
 async def select_candidates(
     openai: OpenAI,
     cache: AioRedisCache,
@@ -325,40 +359,6 @@ async def select_candidates(
             candidates.irrelevant_candidates.append(item)
 
     return candidates
-
-
-def is_valid_candidate_item(
-    newsletter_issue_id: str, item: CacheItem, candidate_items: List[CacheItem]
-) -> bool:
-    valid = True
-
-    length_valid = (
-        len(item.article.content) > newsletter_creator_config.summary_max_word_count
-        if valid
-        else False
-    )
-    if valid and not length_valid:
-        log_for_newsletter_issue(
-            level=logging.INFO,
-            issue_id=newsletter_issue_id,
-            message=f"Article too short:\n\n{item.article.title}\n{item.article.description}",
-        )
-        valid = False
-
-    title_already_included = (
-        item.article.title in [ci.article.title for ci in candidate_items]
-        if valid
-        else False
-    )
-    if valid and title_already_included:
-        log_for_newsletter_issue(
-            level=logging.INFO,
-            issue_id=newsletter_issue_id,
-            message=f"Article already included:\n\n{item.article.title}\n{item.article.description}",
-        )
-        valid = False
-
-    return valid
 
 
 async def get_article_selection_text(
