@@ -1,7 +1,7 @@
 import logging
 import time
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel
 
@@ -13,6 +13,7 @@ from app.core.data_processors.openai.openai_utils import (
     OpenAIRoles,
     call_openai_api_with_rate_limit_protection,
 )
+from app.core.newsletter_creator.logging_utils import log_for_newsletter_issue
 from app.core.newsletter_creator.newsletter_creator_utils import (
     newsletter_creator_config,
 )
@@ -152,11 +153,3 @@ async def ensure_article_is_summarized(
             issue_id=newsletter_issue_id,
             message=f"Summarized article {cache_item.article.title}",
         )
-
-
-def log_for_newsletter_issue(
-    level: int, issue_id: str, message: str, exc_info: Optional[Exception] = None
-):
-    logging.getLogger(__name__).log(
-        level=level, msg=f"ni-{issue_id}: {message}", exc_info=exc_info
-    )

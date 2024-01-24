@@ -14,8 +14,9 @@ from app.core.newsletter_creator.newsletter_creator_utils import NewsletterCreat
 from app.core.newsletter_creator.utils import (
     is_valid_candidate_item,
     get_article_selection_text,
-    log_for_newsletter_issue, Candidates, CreationAction,
+    Candidates, CreationAction,
 )
+from app.core.newsletter_creator.logging_utils import log_for_newsletter_issue
 from app.schemas import IssueArticleCreate, NewsletterIssueCreate, TokenCostCreate
 
 

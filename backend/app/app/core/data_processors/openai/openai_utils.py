@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 
 from app.base_types import Model, Config, Cost
-from app.core.newsletter_creator.utils import log_for_newsletter_issue
+from app.core.newsletter_creator.logging_utils import log_for_newsletter_issue
 
 
 class OpenAIConfig(Config):

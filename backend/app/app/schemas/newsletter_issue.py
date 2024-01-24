@@ -2,7 +2,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from app.schemas import RelevancyPromptCreate, RedundancyPromptCreate
+from app.schemas.redundancy_prompt import RedundancyPromptCreate
+from app.schemas.relevancy_prompt import RelevancyPromptCreate
 from app.schemas.issue_article import IssueArticleCreate
 from app.schemas.issue_metrics import IssueMetricsCreate
 

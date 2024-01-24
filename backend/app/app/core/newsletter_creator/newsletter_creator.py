@@ -18,13 +18,13 @@ from app.core.data_processors.openai.openai_utils import (
     OpenAIModels,
     openai_config, call_openai_api_with_rate_limit_protection,
 )
-from app.core.newsletter_creator.coarse_candidate_selection import coarse_candidate_selection
 from app.core.newsletter_creator.granular_candidate_selection import granular_candidate_selection
 from app.core.newsletter_creator.newsletter_creator_utils import (
     newsletter_creator_config,
 )
-from app.core.newsletter_creator.utils import log_for_newsletter_issue, Candidates, CreationAction, \
+from app.core.newsletter_creator.utils import Candidates, CreationAction, \
     ensure_article_is_summarized, get_newsletter_issue_id
+from app.core.newsletter_creator.logging_utils import log_for_newsletter_issue
 from app.core.newsletter_formatter import NewsletterFormatter
 from app.core.selection_algos.representative_items_algo import (
     generate_most_representative_items,

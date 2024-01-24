@@ -15,10 +15,10 @@ from app.core.newsletter_creator.newsletter_creator_utils import NewsletterCreat
 from app.core.newsletter_creator.utils import (
     Candidates,
     is_valid_candidate_item,
-    log_for_newsletter_issue,
     get_article_selection_text,
     CreationAction,
 )
+from app.core.newsletter_creator.logging_utils import log_for_newsletter_issue
 from app.schemas import NewsletterIssueCreate, TokenCostCreate, IssueArticleCreate, RelevancyPromptCreate, \
     RedundancyPromptCreate
 

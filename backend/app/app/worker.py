@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.core.data_providers.articles_fetcher import update_articles_database
-from app.core.newsletter_creator import generate_newsletter
+from app.core.newsletter_creator.newsletter_creator import generate_newsletter
 from app.crud import crud_user
 from app.db.session import SessionLocal
 
