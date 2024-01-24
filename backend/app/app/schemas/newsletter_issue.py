@@ -2,6 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
+from app.schemas import RelevancyPromptCreate, RedundancyPromptCreate
 from app.schemas.issue_article import IssueArticleCreate
 from app.schemas.issue_metrics import IssueMetricsCreate
 
@@ -16,6 +17,8 @@ class NewsletterIssueCreate(NewsletterIssueBase):
     timestamp: int
     metrics: IssueMetricsCreate
     articles: List[IssueArticleCreate] = []
+    relevancy_prompts: List[RelevancyPromptCreate] = []
+    redundancy_prompts: List[RedundancyPromptCreate] = []
 
 
 class NewsletterIssueUpdate(NewsletterIssueBase):

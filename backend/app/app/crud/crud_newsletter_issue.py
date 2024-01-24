@@ -19,6 +19,8 @@ class CRUDNewsletterIssue(
         obj_in_data = jsonable_encoder(obj_in)
         obj_in_data.pop("articles", None)
         obj_in_data.pop("metrics", None)
+        obj_in_data.pop("relevancy_prompts", None)
+        obj_in_data.pop("redundancy_prompts", None)
         db_obj = self.model(**obj_in_data)
         db.add(db_obj)
         db.commit()

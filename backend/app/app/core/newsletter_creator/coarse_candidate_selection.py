@@ -28,6 +28,8 @@ async def coarse_candidate_selection(
     representative_items_generator: AsyncGenerator[CacheItem, None],
     in_issue: NewsletterIssueCreate,
 ) -> Candidates:
+    # todo: add prompt logging for model fine-tuning
+
     validated_candidate_items = []
     async for item in representative_items_generator:
         if is_valid_candidate_item(

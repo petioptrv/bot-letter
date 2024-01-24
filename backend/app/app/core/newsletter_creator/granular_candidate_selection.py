@@ -19,7 +19,8 @@ from app.core.newsletter_creator.utils import (
     get_article_selection_text,
     CreationAction,
 )
-from app.schemas import NewsletterIssueCreate, TokenCostCreate, IssueArticleCreate
+from app.schemas import NewsletterIssueCreate, TokenCostCreate, IssueArticleCreate, RelevancyPromptCreate, \
+    RedundancyPromptCreate
 
 
 async def granular_candidate_selection(
@@ -105,13 +106,20 @@ async def process_candidate_item(
             )
         )
 
-        if relevancy_response.content.lower() in ["no", "no."]:
+        if relevancy_response.content.lower() in ["no", "no.", "No", "No."]:
             log_for_newsletter_issue(
                 level=logging.INFO,
                 issue_id=newsletter_issue_id,
                 message=(
                     f"\nArticle not relevant:\n\n{item.article.title}\n{item.article.description}"
                 ),
+            )
+            in_issue.relevancy_prompts.append(
+                RelevancyPromptCreate(
+                    issue_id=newsletter_issue_id,
+                    article_id=item.article.article_id,
+                    response=False,
+                )
             )
             candidates.irrelevant_candidates.append(item)
             in_issue.articles.append(
@@ -121,6 +129,13 @@ async def process_candidate_item(
                 )
             )
         else:
+            in_issue.relevancy_prompts.append(
+                RelevancyPromptCreate(
+                    issue_id=newsletter_issue_id,
+                    article_id=item.article.article_id,
+                    response=True,
+                )
+            )
             await process_relevant_candidate_item(
                 newsletter_creator_config=newsletter_creator_config,
                 openai=openai,
@@ -210,6 +225,13 @@ async def process_relevant_candidate_item(
                 )
             )
             if redundancy_response.content.lower() in ["yes", "yes."]:
+                in_issue.redundancy_prompts.append(
+                    RedundancyPromptCreate(
+                        issue_id=newsletter_issue_id,
+                        article_id=item.article.article_id,
+                        response=True,
+                    )
+                )
                 include = False
                 log_for_newsletter_issue(
                     level=logging.INFO,
@@ -217,6 +239,14 @@ async def process_relevant_candidate_item(
                     message=f"Article redundant:\n\n{item.article.title}\n{item.article.description}",
                 )
                 break
+            else:
+                in_issue.redundancy_prompts.append(
+                    RedundancyPromptCreate(
+                        issue_id=newsletter_issue_id,
+                        article_id=item.article.article_id,
+                        response=False,
+                    )
+                )
     if include:
         log_for_newsletter_issue(
             level=logging.DEBUG,

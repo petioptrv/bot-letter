@@ -277,6 +277,14 @@ def log_issue_to_db(in_issue: NewsletterIssueCreate):
     crud.newsletter_issue.create_issue(db=db_session, obj_in=in_issue)
     for in_article in in_issue.articles:
         crud.issue_article.create_issue_article(db=db_session, obj_in=in_article)
+    for in_relevancy_prompt in in_issue.relevancy_prompts:
+        crud.relevancy_prompt.create_relevancy_prompt(
+            db=db_session, obj_in=in_relevancy_prompt
+        )
+    for in_redundancy_prompt in in_issue.redundancy_prompts:
+        crud.redundancy_prompt.create_redundancy_prompt(
+            db=db_session, obj_in=in_redundancy_prompt
+        )
     crud.issue_metrics.create_issue_metrics(db=db_session, obj_in=in_issue.metrics)
     for in_cost in in_issue.metrics.token_costs:
         crud.token_cost.create_token_cost(db=db_session, obj_in=in_cost)
