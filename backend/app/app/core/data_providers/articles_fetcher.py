@@ -42,13 +42,13 @@ async def _perform_articles_database_update():
 
     newest_item = await cache.get_newest_item(newsletter_description=None)
     if newest_item is None:
-        last_timestamp = int(time.time() - 24 * 60 * 60)
+        last_timestamp = int(time.time() - 1 * 60 * 60)
     else:
         last_timestamp = int(newest_item.article.publishing_timestamp)
     response = await news_data_io.get_latest_news(start_from_ts=last_timestamp)
 
     logging.getLogger(name=__name__).info(
-        msg=f"Got {len(response.results)} articles from NewsDataIO"
+        msg=f"Got {len(response.results)} articles from NewsDataIO since {last_timestamp}"
     )
 
     for article in response.results:
