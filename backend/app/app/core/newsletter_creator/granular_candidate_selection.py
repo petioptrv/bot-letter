@@ -31,7 +31,7 @@ async def granular_candidate_selection(
     cache: CacheBase,
     representative_items_generator: AsyncGenerator[CacheItem, None],
     in_issue: NewsletterIssueCreate,
-):
+) -> Candidates:
     processed_articles = 0
     candidates = Candidates()
 
@@ -60,6 +60,8 @@ async def granular_candidate_selection(
                 == newsletter_creator_config.max_articles_per_newsletter
             ):
                 break
+
+    return candidates
 
 
 async def process_candidate_item(
@@ -243,7 +245,8 @@ async def process_relevant_candidate_item(
                 in_issue.redundancy_prompts.append(
                     RedundancyPromptCreate(
                         issue_id=newsletter_issue_id,
-                        article_id=item.article.article_id,
+                        current_article_id=item.article.article_id,
+                        previous_article_id=previous_newsletter_item.article.article_id,
                         response=False,
                     )
                 )
