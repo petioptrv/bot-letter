@@ -1,7 +1,10 @@
+import asyncio
+import logging
 from enum import Enum
 from typing import Optional
 
 from app.base_types import Model, Config, Cost
+from app.core.newsletter_creator.utils import log_for_newsletter_issue
 
 
 class OpenAIConfig(Config):
@@ -34,3 +37,23 @@ class OpenAIModels(str, Enum):
     GPT_4 = "gpt-4"
     GPT_3_5_TURBO = "gpt-3.5-turbo"
     TEXT_EMBEDDING_ADA_002 = "text-embedding-ada-002"
+
+
+async def call_openai_api_with_rate_limit_protection(
+    newsletter_issue_id: str, async_func: callable, *args, **kwargs
+) -> any:
+    result = None
+
+    while result is None:
+        try:
+            result = await async_func(*args, **kwargs)
+        except IOError as e:
+            if "Rate limit reached" in str(e):
+                log_for_newsletter_issue(
+                    level=logging.WARNING,
+                    issue_id=newsletter_issue_id,
+                    message="Rate limit reached. Waiting 1 second.",
+                )
+                await asyncio.sleep(1)
+
+    return result
