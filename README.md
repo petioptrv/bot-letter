@@ -30,9 +30,18 @@ Other static costs across approaches and across issues are:
 - AWS costs
 - Domain name costs
 
-The cost of embeddings was negligible and it is the same for both approaches. It will be lowered further by an increase
+The cost of embeddings was negligible, and it is the same for both approaches. It will be lowered further by an increase
 in user base as summaries are cached and re-used next time an article is retrieved as relevant to a particular
 newsletter description.
+
+### Fine-Tuning Approach
+
+One option is to fine-tune GPT-3.5 to perform the article vetting (relevancy and redundancy checks). This would reduce
+the costs of the vetting roughly 4 times. The summaries will still be performed by ChatGPT-4 turbo.
+
+This new approach brings down the estimated cost to 0.16 for issues where the articles had to be summarized,
+and 0.001 for issues where all articles summaries were already cached. This brings the viability into the realm of the
+possible. The question now is, how much will the quality of the issues suffer?
 
 ## Technologies Used
 
