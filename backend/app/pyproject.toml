@@ -54,7 +54,7 @@ notebook = "^7.0.6"
 pandas = "^2.1.3"
 pymongo = "^4.6.0"
 psycopg2-binary = "^2.9.9"
-datasets = {version = ">=2.13.0", extras = ["s3"]}
+datasets = {version = ">=2.15.0", extras = ["s3"]}
 sagemaker = ">=2.190.0"
 gradio = "3.50.2"
 protobuf = "^4.25.2"
