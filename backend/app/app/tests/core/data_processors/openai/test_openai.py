@@ -150,6 +150,8 @@ any clarification questions?"""
         )
     ]
     completions = asyncio.run(
-        openai.get_chat_completions(model=OpenAIModels.GPT_4_TURBO, messages=messages)
+        openai.get_chat_completions(
+            model=OpenAIModels.GPT_4_TURBO, messages=messages, user_id="test-user-id"
+        )
     )
     print(completions)

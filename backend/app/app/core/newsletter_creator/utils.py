@@ -135,6 +135,7 @@ async def ensure_article_is_summarized(
                     content=cache_item.article.content,
                 ),
             ],
+            user_id=newsletter_issue_id,
         )
         in_issue.metrics.token_costs.append(
             TokenCostCreate(

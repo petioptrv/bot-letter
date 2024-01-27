@@ -29,6 +29,7 @@ class OpenAI:
         self,
         model: OpenAIModels,
         messages: List[OpenAIChatCompletion],
+        user_id: str,
     ) -> OpenAIChatCompletion:
         # todo: attach user IDs to requests: https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids
         url = f"{self._base_url}/chat/completions"
@@ -37,6 +38,7 @@ class OpenAI:
         data = {
             "model": model.value,
             "messages": [message.get_dict_for_api_request() for message in messages],
+            "user": user_id,
         }
         response = await self._api_provider.post(
             url=url, headers=headers, data=json.dumps(data)

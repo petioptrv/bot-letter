@@ -99,6 +99,7 @@ async def select_candidates(
                 content="",
             ),
         ],
+        user_id=newsletter_issue_id,
     )
     in_issue.metrics.token_costs.append(
         TokenCostCreate(

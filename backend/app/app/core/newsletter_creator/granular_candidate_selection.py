@@ -97,6 +97,7 @@ async def process_candidate_item(
         relevancy_response = await openai.get_chat_completions(
             model=OpenAIModels.GPT_4_TURBO,
             messages=[relevancy_completion],
+            user_id=newsletter_issue_id,
         )
         in_issue.metrics.token_costs.append(
             TokenCostCreate(
@@ -216,6 +217,7 @@ async def process_relevant_candidate_item(
             redundancy_response = await openai.get_chat_completions(
                 model=OpenAIModels.GPT_4_TURBO,
                 messages=[redundancy_completion],
+                user_id=newsletter_issue_id,
             )
             in_issue.metrics.token_costs.append(
                 TokenCostCreate(
