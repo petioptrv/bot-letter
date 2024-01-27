@@ -6,7 +6,35 @@ The application allows users to define custom newsletter descriptions. Each day,
 the backend will generate a newsletter based on the user's preferences and send it to the user's email.
 The articles constituting the newsletter will be summarized for the user's convenience.
 
+- [Viability Analysis](#viability-analysis)
+  - [Cost Analysis](#cost-analysis)
+    - [Fine-Tuning To Reduce Costs](#fine-tuning-to-reduce-costs)
+- [Technologies Used](#technologies-used)
+- [Engineering Practices Used](#engineering-practices-used)
+- [Backend Requirements](#backend-requirements)
+- [Frontend Requirements](#frontend-requirements)
+- [Backend local development](#backend-local-development)
+  - [General workflow](#general-workflow)
+  - [Docker Compose Override](#docker-compose-override)
+  - [Backend tests](#backend-tests)
+    - [Local tests](#local-tests)
+    - [Test running stack](#test-running-stack)
+    - [Test Coverage](#test-coverage)
+  - [Live development with Python Jupyter Notebooks](#live-development-with-python-jupyter-notebooks)
+  - [Migrations](#migrations)
+  - [Development with Docker Toolbox](#development-with-docker-toolbox)
+  - [Development in `localhost` with a custom domain](#development-in-localhost-with-a-custom-domain)
+  - [Development with a custom IP](#development-with-a-custom-ip)
+  - [Change the development "domain"](#change-the-development-domain)
+
 ## Viability Analysis
+
+#### TLDR
+
+The project is not viable as there are simply not enough relevant daily news for most of the custom newsletter
+descriptions that were tested.
+
+### Cost Analysis
 
 The project's cost was evaluated by implementing two different approaches to constructing each newsletter issue.
 
@@ -34,7 +62,7 @@ The cost of embeddings was negligible, and it is the same for both approaches. I
 in user base as summaries are cached and re-used next time an article is retrieved as relevant to a particular
 newsletter description.
 
-### Fine-Tuning Approach
+#### Fine-Tuning To Reduce Costs
 
 One option is to fine-tune GPT-3.5 to perform the article vetting (relevancy and redundancy checks). This would reduce
 the costs of the vetting roughly 4 times. The summaries will still be performed by ChatGPT-4 turbo.
@@ -42,6 +70,12 @@ the costs of the vetting roughly 4 times. The summaries will still be performed 
 This new approach brings down the estimated cost to 0.16 for issues where the articles had to be summarized,
 and 0.001 for issues where all articles summaries were already cached. This brings the viability into the realm of the
 possible. The question now is, how much will the quality of the issues suffer?
+
+However, during the preparation of the training data (see the Jupyter Notebook
+[relevancy-training-data-generation.ipynb](notebooks%2Frelevancy-training-data-generation.ipynb)), it was observed that
+most custom newsletter descriptions do not yield interesting newsletter issues. The descriptions can be quite specific
+(e.g. "I want news about the EV market. I am mostly interested in technological advances in the field."), and for most
+of those, there is simply not enough relevant news articles produced daily to fill a newsletter issue. 
 
 ## Technologies Used
 
