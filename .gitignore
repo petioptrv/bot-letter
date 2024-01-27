@@ -788,3 +788,4 @@ qodana.yaml
 /frontend/**/*.js
 /frontend/**/*.js.map
 /flat_bot-letter.txt
+/training-data/
