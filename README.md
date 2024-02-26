@@ -100,6 +100,18 @@ of those, there is simply not enough relevant news articles produced daily to fi
 - RESTful API
 - MVC Architecture
 
+## A Note on Unit Tests (or the lack there of)
+
+I am an avid believer in thorough code testing and TDD. However, the initial goal in
+this project was to quickly get to a state where the quality of the newsletters can be
+evaluated. Note also that the newsletter generation is algorithm is not modular and
+is written in a functional form.
+
+Once the viability of the project was confirmed,
+the next step were going to be an OOP refactoring of the algorithm and the addition of
+unit tests. However, the viability was not confirmed, and the project was paused for
+the time being.
+
 ## Backend Requirements
 
 * [Docker](https://www.docker.com/).
